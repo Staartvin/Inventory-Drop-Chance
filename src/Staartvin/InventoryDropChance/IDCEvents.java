@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.HashMap;
 
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -66,7 +67,7 @@ public class IDCEvents implements Listener{
 					remove.add(drops.get(slot));
 				}
 				// Clear specific player list
-				randomUsed.get(player.getName()).clear();
+				randomUsed.put(player.getName(), new ArrayList<Integer>());
 				
 				drops.removeAll(remove);
 				items.put(player.getName(), itemstackarray);
@@ -87,12 +88,19 @@ public class IDCEvents implements Listener{
 		
 		if (player.hasPermission("idc.percentageloss"))
 		{
+			int count = 0;
 			Inventory replacement = player.getInventory();
 			ItemStack[] newinv = new ItemStack[36];
 			for (int i=0; i<items.get(player.getName()).length;i++) {
 				newinv[i] = items.get(player.getName())[i];
+				if (newinv[i] == null) {
+					break;
+				}
+				count++;
 			} 
 			replacement.setContents(newinv);
+			player.sendMessage(ChatColor.GOLD + (count + " items have survived your death!"));
+			player.sendMessage(ChatColor.RED + "That's " + plugin.retainPercentage + "% of your old inventory.");
 		}
 	}
 	
