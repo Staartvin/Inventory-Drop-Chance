@@ -47,6 +47,6 @@ public class InventoryDropChance extends JavaPlugin {
 			System.out.print("[Inventory Drop Chance] Retain percentage is "
 					+ retainPercentage);
 		}
-
+ // Small test
 	}
 }
