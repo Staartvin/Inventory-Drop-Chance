@@ -3,7 +3,7 @@ author: Staartvin
 website: http://dev.bukkit.org/server-mods/inventory-drop-chance/
 main: Staartvin.InventoryDropChance.InventoryDropChance
 version: 1.1
-description: Control the dropping items on death
+description: Control the dropped items or dropped xp on death
 permissions:
       idc.keepallitems:
         description: A player with this permission will not lose any items.
