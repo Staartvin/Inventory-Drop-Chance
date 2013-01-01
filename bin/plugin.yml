@@ -8,9 +8,6 @@ permissions:
       idc.keepallitems:
         description: A player with this permission will not lose any items.
         default: op
-      idc.percentageloss:
-        description: A player with this permission will lose items based on percentage.
-        default: true
       idc.keepxp:
         description: A player with this permission will not lose any xp.
         default: false
