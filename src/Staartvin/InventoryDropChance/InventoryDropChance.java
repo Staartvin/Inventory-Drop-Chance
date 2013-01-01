@@ -1,14 +1,20 @@
 package Staartvin.InventoryDropChance;
 
+import java.io.File;
+
+import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
 public class InventoryDropChance extends JavaPlugin {
 
 	IDCEvents events = new IDCEvents(this);
+	Files files = new Files(this);
 	boolean XPLoss;
 	int XPLossPercentage;
 	int retainPercentage;
 	boolean verboseLogging;
+	protected FileConfiguration inventoriesConfig;
+	protected File inventoriesConfigFile;
 
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(events, this);

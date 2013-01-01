@@ -9,6 +9,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -21,7 +22,7 @@ public class IDCEvents implements Listener {
 	protected HashMap<String, ItemStack[]> items = new HashMap<String, ItemStack[]>();
 	protected HashMap<String, List<Integer>> randomUsed = new HashMap<String, List<Integer>>();
 	protected HashMap<String, Integer> orgItems = new HashMap<String, Integer>();
-	Player player;
+	protected HashMap<String, Boolean> dead = new HashMap<String, Boolean>();
 
 	public IDCEvents(InventoryDropChance plugin) {
 		this.plugin = plugin;
@@ -29,7 +30,11 @@ public class IDCEvents implements Listener {
 
 	@EventHandler
 	protected void onPlayerDeath(PlayerDeathEvent event) {
-		player = event.getEntity().getPlayer();
+		
+		Player player = event.getEntity().getPlayer();
+		
+		dead.put(player.getName(), true);
+		
 		String playername = player.getName();
 		List<ItemStack> drops = event.getDrops();
 		List<ItemStack> remove = new ArrayList<ItemStack>();
@@ -92,40 +97,41 @@ public class IDCEvents implements Listener {
 	}
 
 	@EventHandler
-	public void onPlayerRespawn(PlayerRespawnEvent event) {
-		String playername = player.getName();
-		if (player != event.getPlayer())
-			return;
+	protected void onPlayerRespawn(PlayerRespawnEvent event) {
+		
+		Player player = event.getPlayer();
+		String playerName = player.getName();
+	
+		if (dead.get(playerName) == null) {
+			dead.put(playerName, false);
+		}
+		if (!dead.get(playerName)) return;
+		
+		dead.put(playerName, false);
 
 		if (player.hasPermission("idc.keepallitems")) {
 			Inventory replacement = player.getInventory();
-			replacement.setContents(inventory.get(playername));
+			replacement.setContents(inventory.get(playerName));
 			return;
 		}
 
 		if (player.hasPermission("idc.percentageloss")) {
-			int count = 0;
-			Inventory replacement = player.getInventory();
-			ItemStack[] newinv = new ItemStack[36];
-			for (int i = 0; i < items.get(playername).length; i++) {
-				newinv[i] = items.get(playername)[i];
-				if (newinv[i] == null) {
-					break;
-				}
-				count++;
-			}
-			replacement.setContents(newinv);
-			player.sendMessage(ChatColor.GOLD
-					+ (count + " items have survived your death!"));
-			if (count == 0 && orgItems.get(playername) == 0) {
-				player.sendMessage(ChatColor.RED + "That's 100% of your old inventory.");
-				return;
-			}
-			player.sendMessage(ChatColor.RED + "That's "
-					+ plugin.retainPercentage + "% of your old inventory.");
+			returnItems(player, items.get(playerName));
 		}
 	}
 
+	@EventHandler
+	protected void onServerQuit(PlayerQuitEvent event) {
+	
+		Player player = event.getPlayer();
+		String playerName = player.getName();
+		
+		if (dead.get(playerName) == null) {
+			dead.put(playerName, false);
+		}
+		if (!dead.get(playerName)) return;
+	}
+	
 	protected int generateRandomUnique(Integer listsize, String playername) {
 
 		int random = 0;
@@ -152,5 +158,30 @@ public class IDCEvents implements Listener {
 			}
 		}
 		return random;
+	}
+	
+	protected void returnItems(Player player, ItemStack[] items) {
+		
+		String playerName = player.getName();
+		
+		int count = 0;
+		Inventory replacement = player.getInventory();
+		ItemStack[] newinv = new ItemStack[36];
+		for (int i = 0; i < items.length; i++) {
+			newinv[i] = items[i];
+			if (newinv[i] == null) {
+				break;
+			}
+			count++;
+		}
+		replacement.setContents(newinv);
+		player.sendMessage(ChatColor.GOLD
+				+ (count + " items have survived your death!"));
+		if (count == 0 && orgItems.get(playerName) == 0) {
+			player.sendMessage(ChatColor.RED + "That's 100% of your old inventory.");
+			return;
+		}
+		player.sendMessage(ChatColor.RED + "That's "
+				+ plugin.retainPercentage + "% of your old inventory.");
 	}
 }
