@@ -23,10 +23,13 @@ public class IDCEvents implements Listener {
 	protected HashMap<String, List<Integer>> randomUsed = new HashMap<String, List<Integer>>();
 	protected HashMap<String, Integer> orgItems = new HashMap<String, Integer>();
 	protected HashMap<String, Boolean> dead = new HashMap<String, Boolean>();
+	protected HashMap<String, Integer> ExpToKeep = new HashMap<String, Integer>();
 
 	public IDCEvents(InventoryDropChance plugin) {
 		this.plugin = plugin;
 	}
+	
+	ExperienceManager expMan;
 
 	@EventHandler
 	protected void onPlayerDeath(PlayerDeathEvent event) {
@@ -35,47 +38,42 @@ public class IDCEvents implements Listener {
 		
 		dead.put(player.getName(), true);
 		
-		String playername = player.getName();
+		String playerName = player.getName();
 		List<ItemStack> drops = event.getDrops();
 		List<ItemStack> remove = new ArrayList<ItemStack>();
-	//	int playerExp = event.getEntity().getTotalExperience();
 		
 		if (player.hasPermission("idc.keepxp")) {
 			event.setDroppedExp(0);
 			event.setKeepLevel(true);
 		}
-
-/*		// Calculate amount of xp not being lost
-			int xpLoss = (int) Math.round(playerExp
-					* (plugin.XPLossPercentage / 100d));
-			System.out.print("XPLoss: " + xpLoss);
-			System.out.print("Dropped XP: " + playerExp);
-			event.setDroppedExp(playerExp - xpLoss); */
 				
 		if (player.hasPermission("idc.keepallitems")) {
 			inventory
-					.put(playername, player.getInventory().getContents());
-			count.put(playername, drops.size());
+					.put(playerName, player.getInventory().getContents());
+			count.put(playerName, drops.size());
 			drops.clear();
 			return;
 		}
+		if (getExpLossUsage(player)){
+		int calEXP = calculateExp(player.getTotalExperience(), player);
+		event.setDroppedExp(player.getTotalExperience() - calEXP);
+		ExpToKeep.put(playerName, calEXP);
+		}
 
-		if (player.hasPermission("idc.percentageloss")) {
-
-			if (orgItems.get(playername) == null) {
-				orgItems.put(playername, drops.size());
+			if (orgItems.get(playerName) == null) {
+				orgItems.put(playerName, drops.size());
 			}
 			
 			// Store number of itemstacks in inventory
-			orgItems.put(playername, drops.size());
+			orgItems.put(playerName, drops.size());
 			
 			
 			// Count the size of total drops
-			count.put(playername, drops.size());
+			count.put(playerName, drops.size());
 
 			// Calculate amount of items not being dropped
-			double calculated = count.get(playername)
-					* (plugin.retainPercentage / 100d);
+			double calculated = count.get(playerName)
+					* (getRetainPercentage(player) / 100d);
 
 			// Initialize new ItemStack array
 			ItemStack[] itemstackarray = new ItemStack[36];
@@ -83,24 +81,23 @@ public class IDCEvents implements Listener {
 			// Create for loop to loop all not drops
 			for (int i = 0; i < Math.round(calculated); i++) {
 				// Create a random number
-				int slot = generateRandomUnique(drops.size(), playername);
+				int slot = generateRandomUnique(drops.size(), playerName);
 
 				itemstackarray[i] = drops.get(slot);
 				remove.add(drops.get(slot));
 			}
 			// Clear specific player list
-			randomUsed.put(playername, new ArrayList<Integer>());
+			randomUsed.put(playerName, new ArrayList<Integer>());
 
 			drops.removeAll(remove);
-			items.put(playername, itemstackarray);
-		}
+			items.put(playerName, itemstackarray);
 	}
 
 	@EventHandler
 	protected void onPlayerRespawn(PlayerRespawnEvent event) {
 		
-		Player player = event.getPlayer();
-		String playerName = player.getName();
+		final Player player = event.getPlayer();
+		final String playerName = player.getName();
 	
 		if (dead.get(playerName) == null) {
 			dead.put(playerName, false);
@@ -109,15 +106,25 @@ public class IDCEvents implements Listener {
 		
 		dead.put(playerName, false);
 
+		if (getExpLossUsage(player)) {
+			if (!player.hasPermission("idc.keepxp")) {
+				if (ExpToKeep.get(playerName) == null) return;
+				plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+				    @Override 
+				    public void run() {
+				    	expMan = new ExperienceManager(player);
+				        expMan.setExp(ExpToKeep.get(playerName));
+				    }
+				}, 10L);
+			}
+		}
+		
 		if (player.hasPermission("idc.keepallitems")) {
 			Inventory replacement = player.getInventory();
 			replacement.setContents(inventory.get(playerName));
 			return;
 		}
-
-		if (player.hasPermission("idc.percentageloss")) {
-			returnItems(player, items.get(playerName));
-		}
+		returnItems(player, items.get(playerName));
 	}
 
 	@EventHandler
@@ -182,6 +189,43 @@ public class IDCEvents implements Listener {
 			return;
 		}
 		player.sendMessage(ChatColor.RED + "That's "
-				+ plugin.retainPercentage + "% of your old inventory.");
+				+ getRetainPercentage(player) + "% of your old inventory.");
+	}
+
+	protected int calculateExp(int Exp, Player player) {
+		 // Calculate amount of xp not being lost
+		int expLoss = (int) Math.round(Exp
+				* (getExpPercentage(player) / 100d));
+		return Exp - expLoss;
+	}
+	
+	protected int getRetainPercentage(Player player) {
+	
+		for (String groupName: plugin.groups) {
+			if (player.hasPermission("idc.group." + groupName)) {
+				return plugin.getConfig().getInt("Groups." + groupName + ".retain percentage");
+			}
+		}
+		return 50;
+	}
+	
+	protected int getExpPercentage(Player player) {
+		
+		for (String groupName: plugin.groups) {
+			if (player.hasPermission("idc.group." + groupName)) {
+				return plugin.getConfig().getInt("Groups." + groupName + ".xp loss");
+			}
+		}
+		return 50;
+	}
+	
+	protected boolean getExpLossUsage(Player player) {
+		
+		for (String groupName: plugin.groups) {
+			if (player.hasPermission("idc.group." + groupName)) {
+				return plugin.getConfig().getBoolean("Groups." + groupName + ".use xp loss");
+			}
+		}
+		return false;
 	}
 }
