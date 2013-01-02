@@ -7,5 +7,8 @@
 			<attribute name="javadoc_location" value="http://jd.bukkit.org/apidocs"/>
 		</attributes>
 	</classpathentry>
+	<classpathentry kind="lib" path="D:/Users/Vincent/Documents/Bukkit Programming/WGCustomFlags.jar"/>
+	<classpathentry kind="lib" path="D:/Users/Vincent/Documents/Bukkit Programming/WorldGuard.jar"/>
+	<classpathentry kind="lib" path="D:/Users/Vincent/Documents/Bukkit Programming/WorldEdit.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
