@@ -17,11 +17,27 @@ public class InventoryDropChance extends JavaPlugin {
 	protected File inventoriesConfigFile;
 	String[] array = {"ExampleGroup"};
 	List<String> groups = new ArrayList<String>();
+	WorldGuardClass wgClass = new WorldGuardClass(this);
 	
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(events, this);
 		loadConfiguration();
 		checkGroups();
+	
+		if (!wgClass.checkWorldGuard()) {
+			System.out.print("[Inventory Drop Chance] WorldGuard has not been found. Custom flags cannot be used!");
+		}
+		if (!wgClass.checkWGCustomFlags()) {
+			System.out.print("[Inventory Drop Chance] WGCustomFlags has not been found. Custom flags cannot be used!");
+		}
+		if (wgClass.checkWorldGuard() && wgClass.checkWGCustomFlags()) {
+			wgClass.initialiseWGHandler(this);
+			System.out.print("[Inventory Drop Chance] Hooked into WorldGuard and WGCustomFlags!");
+			System.out.print("[Inventory Drop Chance] WorldGuard custom flags can be used!");
+			wgClass.wgHandler.getWGCustomFlags();
+			wgClass.wgHandler.getWorldGuard();
+			wgClass.wgHandler.registerFlags();
+		}
 		System.out.println("[" + getDescription().getName()
 				+ "] has been enabled!");
 	}
@@ -42,7 +58,6 @@ public class InventoryDropChance extends JavaPlugin {
 		getConfig().addDefault("verboseLogging", true);
 		getConfig().addDefault("Use XP Loss Percentage", false);
 		getConfig().addDefault("Group List", Arrays.asList(array));
-		
 		getConfig().addDefault("Groups.ExampleGroup.retain percentage", 50);
 		getConfig().addDefault("Groups.ExampleGroup.xp loss", 25);
 		getConfig().addDefault("Groups.ExampleGroup.use xp loss", false);

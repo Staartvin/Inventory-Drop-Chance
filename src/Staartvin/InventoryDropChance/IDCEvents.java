@@ -24,12 +24,11 @@ public class IDCEvents implements Listener {
 	protected HashMap<String, Integer> orgItems = new HashMap<String, Integer>();
 	protected HashMap<String, Boolean> dead = new HashMap<String, Boolean>();
 	protected HashMap<String, Integer> ExpToKeep = new HashMap<String, Integer>();
+	protected Boolean doneWorking = false;
 
 	public IDCEvents(InventoryDropChance plugin) {
 		this.plugin = plugin;
 	}
-	
-	ExperienceManager expMan;
 
 	@EventHandler
 	protected void onPlayerDeath(PlayerDeathEvent event) {
@@ -72,8 +71,14 @@ public class IDCEvents implements Listener {
 			count.put(playerName, drops.size());
 
 			// Calculate amount of items not being dropped
-			double calculated = count.get(playerName)
-					* (getRetainPercentage(player) / 100d);
+			double calculated;
+			if (plugin.wgClass.isWorldGuardReady()) {
+				calculated = count.get(playerName)
+						* (plugin.wgClass.wgHandler.getRetainPercentage(player) / 100d);	
+			}
+			else {
+				calculated = count.get(playerName) * (getRetainPercentage(player) / 100d);
+			}
 
 			// Initialize new ItemStack array
 			ItemStack[] itemstackarray = new ItemStack[36];
@@ -112,10 +117,10 @@ public class IDCEvents implements Listener {
 				plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
 				    @Override 
 				    public void run() {
-				    	expMan = new ExperienceManager(player);
-				        expMan.setExp(ExpToKeep.get(playerName));
+				    	player.giveExp(ExpToKeep.get(playerName));
+				    	doneWorking = true;
 				    }
-				}, 10L);
+				}, 3L);
 			}
 		}
 		
@@ -125,6 +130,21 @@ public class IDCEvents implements Listener {
 			return;
 		}
 		returnItems(player, items.get(playerName));
+		inventory.put(playerName, null);
+		count.put(playerName, null);
+		items.put(playerName, null);
+		orgItems.put(playerName, null);
+		if (!doneWorking) {
+			plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
+			    @Override 
+			    public void run() {
+			    	ExpToKeep.put(playerName, null);
+			    }
+			}, 10L);
+		}
+		else {
+			ExpToKeep.put(playerName, null);
+		}
 	}
 
 	@EventHandler
@@ -188,19 +208,42 @@ public class IDCEvents implements Listener {
 			player.sendMessage(ChatColor.RED + "That's 100% of your old inventory.");
 			return;
 		}
-		player.sendMessage(ChatColor.RED + "That's "
-				+ getRetainPercentage(player) + "% of your old inventory.");
+		if (plugin.wgClass.isWorldGuardReady()) {
+			player.sendMessage(ChatColor.RED + "That's "
+					+ plugin.wgClass.wgHandler.getRetainPercentage(player) + "% of your old inventory.");	
+		}
+		else {
+			player.sendMessage(ChatColor.RED + "That's "
+					+ getRetainPercentage(player) + "% of your old inventory.");
+		}
+		
 	}
 
 	protected int calculateExp(int Exp, Player player) {
 		 // Calculate amount of xp not being lost
-		int expLoss = (int) Math.round(Exp
-				* (getExpPercentage(player) / 100d));
+		int expLoss;
+		if (plugin.wgClass.isWorldGuardReady()) {
+			expLoss = (int) Math.round(Exp
+					* (plugin.wgClass.wgHandler.getExpPercentage(player) / 100d));
+		} else {
+			expLoss = (int) Math.round(Exp
+					* (getExpPercentage(player) / 100d));
+		}
 		return Exp - expLoss;
 	}
 	
-	protected int getRetainPercentage(Player player) {
+	protected boolean getExpLossUsage(Player player) {
+		
+		for (String groupName: plugin.groups) {
+			if (player.hasPermission("idc.group." + groupName)) {
+				return plugin.getConfig().getBoolean("Groups." + groupName + ".use xp loss");
+			}
+		}
+		return false;
+	}
 	
+	protected int getRetainPercentage(Player player) {
+		
 		for (String groupName: plugin.groups) {
 			if (player.hasPermission("idc.group." + groupName)) {
 				return plugin.getConfig().getInt("Groups." + groupName + ".retain percentage");
@@ -217,15 +260,5 @@ public class IDCEvents implements Listener {
 			}
 		}
 		return 50;
-	}
-	
-	protected boolean getExpLossUsage(Player player) {
-		
-		for (String groupName: plugin.groups) {
-			if (player.hasPermission("idc.group." + groupName)) {
-				return plugin.getConfig().getBoolean("Groups." + groupName + ".use xp loss");
-			}
-		}
-		return false;
 	}
 }
