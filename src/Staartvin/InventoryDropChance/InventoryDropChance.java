@@ -16,8 +16,10 @@ public class InventoryDropChance extends JavaPlugin {
 	protected FileConfiguration inventoriesConfig;
 	protected File inventoriesConfigFile;
 	String[] array = {"ExampleGroup"};
+	String[] worldArray = {"DisableWorld", "DisabledWorld_nether", "DisabledWorld_the_end"};
 	List<String> groups = new ArrayList<String>();
 	WorldGuardClass wgClass = new WorldGuardClass(this);
+	WorldHandlers wHandlers = new WorldHandlers(this);
 	
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(events, this);
@@ -38,6 +40,16 @@ public class InventoryDropChance extends JavaPlugin {
 			wgClass.wgHandler.getWorldGuard();
 			wgClass.wgHandler.registerFlags();
 		}
+		
+		// Initialize worlds
+		wHandlers.getWorlds();
+		
+		System.out.print("[Inventory Drop Chance] Configuring worlds!");
+		
+		// Initialize enabled worlds
+		
+		System.out.print("[Inventory Drop Chance] Checking " + wHandlers.getEnabledWorlds().size() + " worlds!");
+		
 		System.out.println("[" + getDescription().getName()
 				+ "] has been enabled!");
 	}
@@ -58,6 +70,7 @@ public class InventoryDropChance extends JavaPlugin {
 		getConfig().addDefault("verboseLogging", true);
 		getConfig().addDefault("Use XP Loss Percentage", false);
 		getConfig().addDefault("Group List", Arrays.asList(array));
+		getConfig().addDefault("DisabledWorlds", Arrays.asList(worldArray));
 		getConfig().addDefault("Groups.ExampleGroup.retain percentage", 50);
 		getConfig().addDefault("Groups.ExampleGroup.xp loss", 25);
 		getConfig().addDefault("Groups.ExampleGroup.use xp loss", false);

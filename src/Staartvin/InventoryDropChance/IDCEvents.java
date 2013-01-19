@@ -24,7 +24,6 @@ public class IDCEvents implements Listener {
 	protected HashMap<String, Integer> orgItems = new HashMap<String, Integer>();
 	protected HashMap<String, Boolean> dead = new HashMap<String, Boolean>();
 	protected HashMap<String, Integer> ExpToKeep = new HashMap<String, Integer>();
-	protected Boolean doneWorking = false;
 
 	public IDCEvents(InventoryDropChance plugin) {
 		this.plugin = plugin;
@@ -35,6 +34,7 @@ public class IDCEvents implements Listener {
 		
 		Player player = event.getEntity().getPlayer();
 		
+		if (!plugin.wHandlers.worldIsEnabled(player.getWorld().getName())) return;
 		dead.put(player.getName(), true);
 		
 		String playerName = player.getName();
@@ -104,6 +104,8 @@ public class IDCEvents implements Listener {
 		final Player player = event.getPlayer();
 		final String playerName = player.getName();
 	
+		if (!plugin.wHandlers.worldIsEnabled(player.getWorld().getName())) return;
+		
 		if (dead.get(playerName) == null) {
 			dead.put(playerName, false);
 		}
@@ -118,7 +120,6 @@ public class IDCEvents implements Listener {
 				    @Override 
 				    public void run() {
 				    	player.giveExp(ExpToKeep.get(playerName));
-				    	doneWorking = true;
 				    }
 				}, 3L);
 			}
@@ -134,17 +135,6 @@ public class IDCEvents implements Listener {
 		count.put(playerName, null);
 		items.put(playerName, null);
 		orgItems.put(playerName, null);
-		if (!doneWorking) {
-			plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
-			    @Override 
-			    public void run() {
-			    	ExpToKeep.put(playerName, null);
-			    }
-			}, 10L);
-		}
-		else {
-			ExpToKeep.put(playerName, null);
-		}
 	}
 
 	@EventHandler
