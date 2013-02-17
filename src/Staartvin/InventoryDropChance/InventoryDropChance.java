@@ -16,7 +16,7 @@ public class InventoryDropChance extends JavaPlugin {
 	protected FileConfiguration inventoriesConfig;
 	protected File inventoriesConfigFile;
 	String[] array = {"ExampleGroup"};
-	String[] worldArray = {"DisableWorld", "DisabledWorld_nether", "DisabledWorld_the_end"};
+	String[] worldArray = {"DisabledWorld", "DisabledWorld_nether", "DisabledWorld_the_end"};
 	List<String> groups = new ArrayList<String>();
 	WorldGuardClass wgClass = new WorldGuardClass(this);
 	WorldHandlers wHandlers = new WorldHandlers(this);
@@ -68,7 +68,6 @@ public class InventoryDropChance extends JavaPlugin {
 						+ "\nMake sure that a group listed in 'Group List' is also defined as a group in 'Groups'!");
 
 		getConfig().addDefault("verboseLogging", true);
-		getConfig().addDefault("Use XP Loss Percentage", false);
 		getConfig().addDefault("Group List", Arrays.asList(array));
 		getConfig().addDefault("DisabledWorlds", Arrays.asList(worldArray));
 		getConfig().addDefault("Groups.ExampleGroup.retain percentage", 50);

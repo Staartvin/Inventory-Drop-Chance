@@ -55,6 +55,8 @@ public class IDCEvents implements Listener {
 		}
 		if (getExpLossUsage(player)){
 		int calEXP = calculateExp(player.getTotalExperience(), player);
+		System.out.print("Dropped EXP: " + (player.getTotalExperience() - calEXP));
+		System.out.print("Given back EXP: " + calEXP);
 		event.setDroppedExp(player.getTotalExperience() - calEXP);
 		ExpToKeep.put(playerName, calEXP);
 		}
@@ -119,7 +121,10 @@ public class IDCEvents implements Listener {
 				plugin.getServer().getScheduler().runTaskLater(plugin, new Runnable() {
  
 				    public void run() {
+				    	System.out.print("Player already had: " + player.getTotalExperience());
+					    System.out.print("Giving player " + ExpToKeep.get(playerName) + " EXP!");
 				    	player.giveExp(ExpToKeep.get(playerName));
+				    	System.out.print("Player now has: " + player.getTotalExperience());
 				    }
 				}, 3L);
 			}
