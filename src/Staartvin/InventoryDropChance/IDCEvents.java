@@ -211,13 +211,11 @@ public class IDCEvents implements Listener {
 			if (dataValueBlack != null && damageValueBlack != null) {
 				if (dataValue == dataValueBlack
 						&& damageValue == damageValueBlack) {
-					System.out.print("Blacklist -> " + dataValue + ":" + damageValue + " = " + dataValueBlack + ":" + damageValueBlack);
 					return true;
 				}
 					
 			} else {
 				if (dataValue == dataValueBlack) {
-					System.out.print("Blacklist -> " + dataValue + " = " + dataValueBlack);
 					return true;
 				}
 			}
@@ -248,12 +246,10 @@ public class IDCEvents implements Listener {
 			if (dataValueBlack != null && damageValueBlack != null) {
 				if (dataValue == dataValueBlack
 						&& damageValue == damageValueBlack) {
-					System.out.print("Whitelist -> " + dataValue + ":" + damageValue + " = " + dataValueBlack + ":" + damageValueBlack);
 					return true;
 				}
 			} else {
 				if (dataValue == dataValueBlack) {
-					System.out.print("Whitelist -> " + dataValue + " = " + dataValueBlack);
 					return true;
 				}
 			}
