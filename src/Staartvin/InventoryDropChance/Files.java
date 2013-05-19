@@ -16,40 +16,48 @@ public class Files {
 		this.plugin = plugin;
 	}
 	
+	public String PERCENTAGE_MESSAGE_ON_RESPAWN = "";
+	public String ITEMS_MESSAGE_ON_RESPAWN = "";
+	
 	// Player Config Methods
-			protected void reloadInventoriesConfig() {
-				if (plugin.inventoriesConfigFile == null) {
-					plugin.inventoriesConfigFile = new File(plugin.getDataFolder(),
-							"inventories.yml");
+			protected void reloadLanguageConfig() {
+				if (plugin.languageConfigFile == null) {
+					plugin.languageConfigFile = new File(plugin.getDataFolder(),
+							"language.yml");
 				}
-				plugin.inventoriesConfig = YamlConfiguration
-						.loadConfiguration(plugin.inventoriesConfigFile);
+				plugin.languageConfig = YamlConfiguration
+						.loadConfiguration(plugin.languageConfigFile);
 
 				// Look for defaults in the jar
-				InputStream defConfigStream = plugin.getResource("inventories.yml");
+				InputStream defConfigStream = plugin.getResource("language.yml");
 				if (defConfigStream != null) {
 					YamlConfiguration defConfig = YamlConfiguration
 							.loadConfiguration(defConfigStream);
-					plugin.inventoriesConfig.setDefaults(defConfig);
+					plugin.languageConfig.setDefaults(defConfig);
 				}
 			}
 
-			protected FileConfiguration getInventoriesConfig() {
-				if (plugin.inventoriesConfig == null) {
-					this.reloadInventoriesConfig();
+			protected FileConfiguration getLanguageConfig() {
+				if (plugin.languageConfig == null) {
+					this.reloadLanguageConfig();
 				}
-				return plugin.inventoriesConfig;
+				return plugin.languageConfig;
 			}
 
-			protected void saveInventoriesConfig() {
-				if (plugin.inventoriesConfig == null || plugin.inventoriesConfigFile == null) {
+			protected void saveLanguageConfig() {
+				if (plugin.languageConfig == null || plugin.languageConfigFile == null) {
 					return;
 				}
 				try {
-					getInventoriesConfig().save(plugin.inventoriesConfigFile);
+					getLanguageConfig().save(plugin.languageConfigFile);
 				} catch (IOException ex) {
 					plugin.getLogger().log(Level.SEVERE,
-							"Could not save config to " + plugin.inventoriesConfigFile, ex);
+							"Could not save config to " + plugin.languageConfigFile, ex);
 				}
+			}
+			
+			protected void loadConfigVariables() {
+				PERCENTAGE_MESSAGE_ON_RESPAWN = plugin.languageConfig.getString("PERCENTAGE_MESSAGE_ON_RESPAWN");
+				ITEMS_MESSAGE_ON_RESPAWN = plugin.languageConfig.getString("ITEMS_MESSAGE_ON_RESPAWN");
 			}
 }
