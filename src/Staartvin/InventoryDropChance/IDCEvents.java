@@ -48,6 +48,7 @@ public class IDCEvents implements Listener {
 			event.setKeepLevel(true);
 		}
 
+		// TODO: FIX BUG: ARMOR IS NOT BEING KEPT OR CHECKED OR WHATEVER. THIS IS BECAUSE IT'S NOT PART OF inv.getContents()
 		if (player.hasPermission("idc.keepallitems")) {
 			inventory.put(playerName, player.getInventory().getContents());
 			count.put(playerName, drops.size());
