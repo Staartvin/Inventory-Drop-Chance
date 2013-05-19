@@ -122,10 +122,6 @@ public class IDCEvents implements Listener {
 		for (int i = 0; i < Math.round(calculated); i++) {
 			// Create a random number
 			int slot = generateRandomUnique(drops.size(), playerName);
-
-			/*if (blacklisted.contains(drops.get(slot))) {
-				continue;
-			}*/
 			
 			itemstackarray[i] = drops.get(slot);
 			remove.add(drops.get(slot));
