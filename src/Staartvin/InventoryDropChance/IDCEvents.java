@@ -72,7 +72,7 @@ public class IDCEvents implements Listener {
 
 		// Group of the player
 		String group = getGroup(player);
-		System.out.print("Group: " + group);
+		//System.out.print("Group: " + group);
 
 		// Remove the blacklisted items from inventory so they are not counted
 		for (ItemStack item : player.getInventory()) {
@@ -133,9 +133,9 @@ public class IDCEvents implements Listener {
 		drops.removeAll(remove);
 		drops.addAll(blacklisted);
 		
-		for (ItemStack item:drops) {
+		/*for (ItemStack item:drops) {
 			System.out.print("Dropped items: " + item);
-		}
+		}*/
 		
 		// Items that are kept
 		items.put(playerName, itemstackarray);
