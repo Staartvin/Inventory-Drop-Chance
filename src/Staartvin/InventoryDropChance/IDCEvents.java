@@ -1,8 +1,8 @@
 package Staartvin.InventoryDropChance;
 
 import java.util.ArrayList;
-import java.util.List;
 import java.util.HashMap;
+import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
@@ -17,14 +17,24 @@ import org.bukkit.inventory.ItemStack;
 public class IDCEvents implements Listener {
 
 	InventoryDropChance plugin;
-	protected HashMap<String, ItemStack[]> inventory = new HashMap<String, ItemStack[]>();
+
+	// Amount of items a player had
 	protected HashMap<String, Integer> count = new HashMap<String, Integer>();
-	protected HashMap<String, ItemStack[]> items = new HashMap<String, ItemStack[]>();
+
+	// Items that will be given back on respawn
+	protected HashMap<String, List<ItemStack>> items = new HashMap<String, List<ItemStack>>();
+
+	// Slots that are already used and can't be checked again
 	protected HashMap<String, List<Integer>> randomUsed = new HashMap<String, List<Integer>>();
-	protected HashMap<String, Integer> orgItems = new HashMap<String, Integer>();
+
+	// Is the player dead or not?
 	protected HashMap<String, Boolean> dead = new HashMap<String, Boolean>();
+
+	// The amount of EXP to give back on respawn
 	protected HashMap<String, Integer> ExpToKeep = new HashMap<String, Integer>();
-	protected HashMap<String, List<ItemStack>> whitelistedItems= new HashMap<String, List<ItemStack>>();
+
+	// A list of items that are whitelisted from the inv and should be given back
+	protected HashMap<String, List<ItemStack>> whitelistedItems = new HashMap<String, List<ItemStack>>();
 
 	public IDCEvents(InventoryDropChance plugin) {
 		this.plugin = plugin;
@@ -35,110 +45,67 @@ public class IDCEvents implements Listener {
 
 		Player player = event.getEntity().getPlayer();
 
-		if (!plugin.wHandlers.worldIsEnabled(player.getWorld().getName()))
-			return;
 		dead.put(player.getName(), true);
 
-		String playerName = player.getName();
-		List<ItemStack> drops = event.getDrops();
-		List<ItemStack> remove = new ArrayList<ItemStack>();
+		if (!plugin.wHandlers.worldIsEnabled(player.getWorld().getName()))
+			return;
 
-		if (player.hasPermission("idc.keepxp")) {
-			event.setDroppedExp(0);
-			event.setKeepLevel(true);
-		}
+		count.put(player.getName(), player.getInventory().getContents().length);
 
-		// TODO: FIX BUG: ARMOR IS NOT BEING KEPT OR CHECKED OR WHATEVER. THIS IS BECAUSE IT'S NOT PART OF inv.getContents()
+		// Run EXP check
+		doEXPCheck(player, event);
+
 		if (player.hasPermission("idc.keepallitems")) {
-			inventory.put(playerName, player.getInventory().getContents());
-			count.put(playerName, drops.size());
-			drops.clear();
+			List<ItemStack> itemStackArray = new ArrayList<ItemStack>();
+
+			// Give full inventory back
+			for (int i = 0; i < player.getInventory().getContents().length; i++) {
+				ItemStack item = player.getInventory().getContents()[i];
+
+				itemStackArray.add(item);
+			}
+
+			// Clear drops
+			event.getDrops().clear();
+
+			items.put(player.getName(), itemStackArray);
+
 			return;
 		}
 
-		if (getExpLossUsage(player)) {
-			int calEXP = calculateExp(player.getTotalExperience(), player);
-			//	System.out.print("Dropped EXP: " + (player.getTotalExperience() - calEXP));
-			//	System.out.print("Given back EXP: " + calEXP);
-			event.setDroppedExp(player.getTotalExperience() - calEXP);
-			ExpToKeep.put(playerName, calEXP);
+		String checkFirst = plugin.getConfig().getString(
+				"Groups." + getGroup(player) + ".check first", "save");
+
+		if (checkFirst.equalsIgnoreCase("save")) {
+
+			// Run save check first
+			items.put(player.getName(), doSaveCheck(player, event.getDrops()));
+
+			// Run delete check afterwards
+			// Remove deleted items from items so they are not given back
+			List<ItemStack> givenItems = items.get(player.getName());
+			List<ItemStack> deletedItems = doDeleteCheck(player, givenItems);
+
+			givenItems.removeAll(deletedItems);
+
+			// Update given items
+			items.put(player.getName(), givenItems);
+
+			// Remove the deleted items from the drops so they are not dropped as well
+			event.getDrops().removeAll(deletedItems);
+
+		} else if (checkFirst.equalsIgnoreCase("delete")) {
+
+			// Run delete check first
+			List<ItemStack> deletedItems = doDeleteCheck(player,
+					event.getDrops());
+
+			// Remove deleted items from dropped items
+			event.getDrops().removeAll(deletedItems);
+
+			// Run save check afterwards
+			items.put(player.getName(), doSaveCheck(player, event.getDrops()));
 		}
-
-		// Initialise a new array that will hold all items that will be forced to drop (I.E. Blacklisted)
-		List<ItemStack> blacklisted = new ArrayList<ItemStack>();
-
-		// Initialise a new array that will hold all items that will be forced to keep (I.E. Whitelisted)
-		List<ItemStack> whitelisted = new ArrayList<ItemStack>();
-
-		// Group of the player
-		String group = getGroup(player);
-		//System.out.print("Group: " + group);
-
-		// Remove the blacklisted items from inventory so they are not counted
-		for (ItemStack item : player.getInventory()) {
-			if (group != null && item != null) {
-				if (isBlacklistedItem(item, group)) {
-					blacklisted.add(item);
-					// We don't want to keep an item that is forced to be dropped.
-					drops.remove(item);
-					continue;
-				} else if (isWhitelistedItem(item, group)) {
-					whitelisted.add(item);
-					
-					// We don't want the same item given more than once, so we remove it from the drops
-					drops.remove(item);
-					continue;
-				}
-			}
-		}
-		
-		// Make the whitelisted items global so returnItems() can add them to the inventory
-		whitelistedItems.put(playerName, whitelisted);
-		
-
-		if (orgItems.get(playerName) == null) {
-			orgItems.put(playerName, drops.size());
-		}
-
-		// Store number of itemstacks in inventory
-		orgItems.put(playerName, drops.size());
-
-		// Count the size of total drops
-		count.put(playerName, drops.size());
-
-		// Calculate amount of items not being dropped
-		double calculated;
-		if (plugin.wgClass.isWorldGuardReady()) {
-			calculated = count.get(playerName)
-					* (plugin.wgClass.wgHandler.getRetainPercentage(player) / 100d);
-		} else {
-			calculated = count.get(playerName)
-					* (getRetainPercentage(player) / 100d);
-		}
-
-		// Initialize new ItemStack array
-		ItemStack[] itemstackarray = new ItemStack[36];
-
-		// Create for loop to loop all not drops
-		for (int i = 0; i < Math.round(calculated); i++) {
-			// Create a random number
-			int slot = generateRandomUnique(drops.size(), playerName);
-			
-			itemstackarray[i] = drops.get(slot);
-			remove.add(drops.get(slot));
-		}
-		// Clear specific player list
-		randomUsed.put(playerName, new ArrayList<Integer>());
-
-		drops.removeAll(remove);
-		drops.addAll(blacklisted);
-		
-		/*for (ItemStack item:drops) {
-			System.out.print("Dropped items: " + item);
-		}*/
-		
-		// Items that are kept
-		items.put(playerName, itemstackarray);
 	}
 
 	@EventHandler
@@ -158,10 +125,11 @@ public class IDCEvents implements Listener {
 		if (!plugin.wHandlers.worldIsEnabled(player.getWorld().getName()))
 			return;
 
+		// Give player saved EXP
 		if (getExpLossUsage(player)) {
 			if (!player.hasPermission("idc.keepxp")) {
-				if (ExpToKeep.get(playerName) == null)
-					return;
+				if (ExpToKeep.get(playerName) == null) return;
+				
 				plugin.getServer().getScheduler()
 						.runTaskLater(plugin, new Runnable() {
 
@@ -175,17 +143,9 @@ public class IDCEvents implements Listener {
 			}
 		}
 
-		if (player.hasPermission("idc.keepallitems")) {
-			Inventory replacement = player.getInventory();
-			replacement.setContents(inventory.get(playerName));
-			return;
-		}
-
 		returnItems(player, items.get(playerName));
-		inventory.put(playerName, null);
 		count.put(playerName, null);
 		items.put(playerName, null);
-		orgItems.put(playerName, null);
 		whitelistedItems.put(playerName, null);
 	}
 
@@ -214,7 +174,7 @@ public class IDCEvents implements Listener {
 						&& damageValue == damageValueBlack) {
 					return true;
 				}
-					
+
 			} else {
 				if (dataValue == dataValueBlack) {
 					return true;
@@ -299,16 +259,20 @@ public class IDCEvents implements Listener {
 		return random;
 	}
 
-	protected void returnItems(Player player, ItemStack[] items) {
+	protected void returnItems(Player player, List<ItemStack> items) {
 
 		String playerName = player.getName();
 
 		int count = 0;
 		Inventory replacement = player.getInventory();
 		ItemStack[] newinv = new ItemStack[36];
-		
-		for (int i = 0; i < items.length; i++) {
-			newinv[i] = items[i];
+
+		for (int i = 0; i < newinv.length; i++) {
+			if (i >= items.size()) {
+				break;
+			}
+
+			newinv[i] = items.get(i);
 			if (newinv[i] == null) {
 				break;
 			}
@@ -316,32 +280,35 @@ public class IDCEvents implements Listener {
 		}
 
 		replacement.setContents(newinv);
-		
+
 		// Give whitelisted items
-		for (ItemStack item:whitelistedItems.get(playerName)) {
+		for (ItemStack item : whitelistedItems.get(playerName)) {
 			replacement.addItem(item);
 		}
-		
+
 		String itemMessage = plugin.files.ITEMS_MESSAGE_ON_RESPAWN.replace(
 				"{0}", count + "");
-		String percentageMessage = plugin.files.PERCENTAGE_MESSAGE_ON_RESPAWN;
-
-		player.sendMessage(ChatColor.GOLD + itemMessage);
-		if (count == 0 && orgItems.get(playerName) == 0) {
-			percentageMessage = percentageMessage.replace("{0}", 100 + "%");
-			player.sendMessage(ChatColor.RED + percentageMessage);
-			return;
+		String percentageMessage = "";
+		
+		if (plugin.getConfig().getString("Groups." + getGroup(player) + ".check first").equalsIgnoreCase("save")) {
+			percentageMessage = plugin.files.PERCENTAGE_MESSAGE_ON_RESPAWN;
+		} else if (plugin.getConfig().getString("Groups." + getGroup(player) + ".check first").equalsIgnoreCase("delete")){
+			percentageMessage = plugin.files.INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN;
+		} else {
+			percentageMessage = plugin.files.PERCENTAGE_MESSAGE_ON_RESPAWN;
 		}
+		
+		
+		player.sendMessage(ChatColor.GOLD + itemMessage);
 		if (plugin.wgClass.isWorldGuardReady()) {
 			percentageMessage = percentageMessage.replace("{0}",
-					plugin.wgClass.wgHandler.getRetainPercentage(player) + "%");
+					plugin.wgClass.wgHandler.getRetainPercentage(player) + "%").replace("{1}", plugin.wgClass.wgHandler.getDeletePercentage(player) + "%");
 			player.sendMessage(ChatColor.RED + percentageMessage);
 		} else {
 			percentageMessage = percentageMessage.replace("{0}",
-					getRetainPercentage(player) + "%");
+					getRetainPercentage(player) + "%").replace("{1}", getDeletePercentage(player) + "%");
 			player.sendMessage(ChatColor.RED + percentageMessage);
 		}
-
 	}
 
 	protected int calculateExp(int Exp, Player player) {
@@ -380,6 +347,17 @@ public class IDCEvents implements Listener {
 					"Groups." + group + ".retain percentage");
 	}
 
+	protected int getDeletePercentage(Player player) {
+
+		String group = getGroup(player);
+
+		if (group == null)
+			return 50;
+		else
+			return plugin.getConfig().getInt(
+					"Groups." + group + ".delete percentage");
+	}
+
 	protected int getExpPercentage(Player player) {
 		String group = getGroup(player);
 
@@ -396,5 +374,136 @@ public class IDCEvents implements Listener {
 			}
 		}
 		return null;
+	}
+
+	// Get items that are saved
+	protected List<ItemStack> doSaveCheck(Player player,
+			List<ItemStack> itemsToCheck) {
+
+		String playerName = player.getName();
+		List<ItemStack> drops = itemsToCheck;
+
+		// FIXME: ARMOR IS NOT BEING KEPT OR CHECKED OR WHATEVER. THIS IS BECAUSE IT'S NOT PART OF inv.getContents()
+
+		// Initialise a new array that will hold all items that will be forced to drop (I.E. Blacklisted)
+		List<ItemStack> blacklisted = new ArrayList<ItemStack>();
+
+		// Initialise a new array that will hold all items that will be forced to keep (I.E. Whitelisted)
+		List<ItemStack> whitelisted = new ArrayList<ItemStack>();
+
+		// Group of the player
+		String group = getGroup(player);
+
+		// Remove the blacklisted items from inventory so they are not counted
+		for (ItemStack item : player.getInventory()) {
+			if (group != null && item != null) {
+				if (isBlacklistedItem(item, group)) {
+					blacklisted.add(item);
+					// We don't want to keep an item that is forced to be dropped.
+					drops.remove(item);
+					continue;
+				} else if (isWhitelistedItem(item, group)) {
+					whitelisted.add(item);
+
+					// We don't want the same item given more than once, so we remove it from the drops
+					drops.remove(item);
+					continue;
+				}
+			}
+		}
+
+		// Make the whitelisted items global so returnItems() can add them to the inventory
+		whitelistedItems.put(playerName, whitelisted);
+
+		// Calculate amount of items not being dropped
+		double calculated;
+		if (plugin.wgClass.isWorldGuardReady()) {
+			calculated = drops.size()
+					* (plugin.wgClass.wgHandler.getRetainPercentage(player) / 100d);
+		} else {
+			calculated = drops.size() * (getRetainPercentage(player) / 100d);
+		}
+
+		// Initialize new ItemStack array
+		List<ItemStack> itemstackarray = new ArrayList<ItemStack>();
+
+		// Clear slots used
+		randomUsed.put(playerName, new ArrayList<Integer>());
+
+		// Keep a list of items that are kept and should be removed from the drops
+		List<ItemStack> keptItems = new ArrayList<ItemStack>();
+
+		// Create for loop to loop all not drops
+		for (int i = 0; i < Math.round(calculated); i++) {
+			// Create a random number
+			int slot = generateRandomUnique(drops.size(), playerName);
+
+			itemstackarray.add(drops.get(slot));
+			keptItems.add(drops.get(slot));
+		}
+		// Clear slots used
+		randomUsed.put(playerName, new ArrayList<Integer>());
+
+		// Remove all kept items from the drops
+		drops.removeAll(keptItems);
+
+		// Drop all blacklisted items (They are forced to drop)
+		drops.addAll(blacklisted);
+
+		// Items that are kept
+		return itemstackarray;
+	}
+
+	protected void doEXPCheck(Player player, PlayerDeathEvent event) {
+		if (player.hasPermission("idc.keepxp")) {
+			event.setDroppedExp(0);
+			event.setKeepLevel(true);
+			return;
+		}
+
+		if (getExpLossUsage(player)) {
+			int calEXP = calculateExp(player.getTotalExperience(), player);
+
+			// Dropped exp = total exp of player - (total exp * xploss percentage)
+			event.setDroppedExp(player.getTotalExperience() - calEXP);
+
+			// Save the exp to give back
+			ExpToKeep.put(player.getName(), calEXP);
+		}
+	}
+
+	protected List<ItemStack> doDeleteCheck(Player player,
+			List<ItemStack> itemsToCheck) {
+
+		String playerName = player.getName();
+
+		// Calculate amount of items being deleted
+		double calculated;
+		if (plugin.wgClass.isWorldGuardReady()) {
+			calculated = itemsToCheck.size()
+					* (plugin.wgClass.wgHandler.getDeletePercentage(player) / 100d);
+		} else {
+			calculated = itemsToCheck.size()
+					* (getDeletePercentage(player) / 100d);
+		}
+
+		List<ItemStack> deletedItems = new ArrayList<ItemStack>();
+
+		// Clear slots used
+		randomUsed.put(playerName, new ArrayList<Integer>());
+
+		// Create for loop to loop all not drops
+		for (int i = 0; i < Math.round(calculated); i++) {
+			// Create a random number
+			int slot = generateRandomUnique(itemsToCheck.size(), playerName);
+
+			deletedItems.add(itemsToCheck.get(slot));
+		}
+
+		// Clear slots used
+		randomUsed.put(playerName, new ArrayList<Integer>());
+
+		// Return the deleted items
+		return deletedItems;
 	}
 }
