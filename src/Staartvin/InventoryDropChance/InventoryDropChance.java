@@ -2,9 +2,7 @@ package Staartvin.InventoryDropChance;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -15,16 +13,13 @@ public class InventoryDropChance extends JavaPlugin {
 	boolean verboseLogging;
 	protected FileConfiguration languageConfig;
 	protected File languageConfigFile;
-	String[] array = { "ExampleGroup" };
-	String[] worldArray = { "DisabledWorld", "DisabledWorld_nether",
-			"DisabledWorld_the_end" };
 	List<String> groups = new ArrayList<String>();
 	WorldGuardClass wgClass = new WorldGuardClass(this);
 	WorldHandlers wHandlers = new WorldHandlers(this);
 
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(events, this);
-		loadConfiguration();
+		files.loadConfiguration();
 		checkGroups();
 
 		if (!wgClass.checkWorldGuard()) {
@@ -67,54 +62,6 @@ public class InventoryDropChance extends JavaPlugin {
 		saveConfig();
 		System.out.println("[" + getDescription().getName()
 				+ "] has been disabled!");
-	}
-
-	protected void loadConfiguration() {
-		getConfig()
-				.options()
-				.header("Inventory Drop Chance v"
-						+ getDescription().getVersion()
-						+ " Config"
-						+ "\nMake sure that a group listed in 'Group List' is also defined as a group in 'Groups'!"
-						+ "\nAn item on the whitelist will always be kept."
-						+ "\nAn item on the blacklist will always be dropped.");
-
-		getConfig().addDefault("verboseLogging", true);
-		getConfig().addDefault("Group List", Arrays.asList(array));
-		getConfig().addDefault("DisabledWorlds", Arrays.asList(worldArray));
-		getConfig().addDefault("Groups.ExampleGroup.retain percentage", 50);
-		getConfig().addDefault("Groups.ExampleGroup.xp loss", 25);
-		getConfig().addDefault("Groups.ExampleGroup.use xp loss", false);
-
-		if (getConfig().getStringList("Groups.ExampleGroup.blacklist").isEmpty()) {
-			getConfig().set("Groups.ExampleGroup.blacklist",
-					Arrays.asList(new String[] { "35:7", "273" }));
-		}
-		
-		if (getConfig().getStringList("Groups.ExampleGroup.whitelist").isEmpty()) {
-			getConfig().set("Groups.ExampleGroup.whitelist",
-					Arrays.asList(new String[] { "276", "25" }));
-		}
-
-		files.getLanguageConfig().addDefault("ITEMS_MESSAGE_ON_RESPAWN",
-				"{0} items have survived your death!");
-		files.getLanguageConfig().addDefault("PERCENTAGE_MESSAGE_ON_RESPAWN",
-				"That is {0} of your old inventory.");
-
-		files.loadConfigVariables();
-
-		getConfig().options().copyDefaults(true);
-		saveConfig();
-		files.getLanguageConfig().options().copyDefaults(true);
-		files.saveLanguageConfig();
-
-		verboseLogging = getConfig().getBoolean("verboseLogging");
-
-		if (verboseLogging) {
-			System.out.print("[Inventory Drop Chance] "
-					+ getConfig().getStringList("Group List").size()
-					+ " groups found!");
-		}
 	}
 
 	protected boolean checkGroups() {
