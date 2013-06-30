@@ -16,6 +16,7 @@ public class InventoryDropChance extends JavaPlugin {
 	List<String> groups = new ArrayList<String>();
 	WorldGuardClass wgClass = new WorldGuardClass(this);
 	WorldHandlers wHandlers = new WorldHandlers(this);
+	public Methods methods = new Methods(this);
 
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(events, this);
