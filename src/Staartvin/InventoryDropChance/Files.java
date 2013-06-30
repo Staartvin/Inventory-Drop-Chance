@@ -8,6 +8,7 @@ import java.util.logging.Level;
 
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 public class Files {
 
@@ -129,5 +130,56 @@ public class Files {
 					+ config.getStringList("Group List").size()
 					+ " groups found!");
 		}
+	}
+	
+	protected boolean getExpLossUsage(Player player) {
+
+		String group = getGroup(player);
+
+		if (group == null)
+			return false;
+		else
+			return plugin.getConfig().getBoolean(
+					"Groups." + group + ".use xp loss");
+	}
+
+	protected int getRetainPercentage(Player player) {
+
+		String group = getGroup(player);
+
+		if (group == null)
+			return 50;
+		else
+			return plugin.getConfig().getInt(
+					"Groups." + group + ".retain percentage");
+	}
+
+	protected int getDeletePercentage(Player player) {
+
+		String group = getGroup(player);
+
+		if (group == null)
+			return 50;
+		else
+			return plugin.getConfig().getInt(
+					"Groups." + group + ".delete percentage");
+	}
+	
+	protected String getGroup(Player player) {
+		for (String groupName : plugin.groups) {
+			if (player.hasPermission("idc.group." + groupName)) {
+				return groupName;
+			}
+		}
+		return null;
+	}
+	
+	protected int getExpPercentage(Player player) {
+		String group = getGroup(player);
+
+		if (group == null)
+			return 50;
+		else
+			return plugin.getConfig().getInt("Groups." + group + ".xp loss");
 	}
 }
