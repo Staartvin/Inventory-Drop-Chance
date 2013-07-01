@@ -21,6 +21,7 @@ public class Files {
 	public String PERCENTAGE_MESSAGE_ON_RESPAWN = "";
 	public String INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN = "";
 	public String ITEMS_MESSAGE_ON_RESPAWN = "";
+	public String ALL_ITEMS_SURVIVED = "";
 
 	// Player Config Methods
 	protected void reloadLanguageConfig() {
@@ -68,6 +69,8 @@ public class Files {
 				.getString("INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN");
 		ITEMS_MESSAGE_ON_RESPAWN = plugin.languageConfig
 				.getString("ITEMS_MESSAGE_ON_RESPAWN");
+		ALL_ITEMS_SURVIVED = plugin.languageConfig
+				.getString("ALL_ITEMS_SURVIVED");
 	}
 
 	protected void loadConfiguration() {
@@ -115,6 +118,8 @@ public class Files {
 				"{0} of your old inventory has been saved and {1} of that has been deleted.");
 		plugin.files.getLanguageConfig().addDefault("INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN",
 				"{1} of your old inventory has been deleted and {0} of that has been saved.");
+		plugin.files.getLanguageConfig().addDefault("ALL_ITEMS_SURVIVED",
+				"All your items survived your death!");
 
 		plugin.files.loadConfigVariables();
 
