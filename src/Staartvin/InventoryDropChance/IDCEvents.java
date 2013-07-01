@@ -3,7 +3,6 @@ package Staartvin.InventoryDropChance;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
-
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -49,6 +48,7 @@ public class IDCEvents implements Listener {
 
 		if (player.hasPermission("idc.keepallitems")) {
 			List<ItemStack> itemStackArray = new ArrayList<ItemStack>();
+			List<ItemStack> armourStackArray = new ArrayList<ItemStack>();
 
 			// Give full inventory back
 			for (int i = 0; i < player.getInventory().getContents().length; i++) {
@@ -57,26 +57,36 @@ public class IDCEvents implements Listener {
 				itemStackArray.add(item);
 			}
 
+			// Give all armour back
+			for (ItemStack armour : player.getInventory().getArmorContents()) {
+				armourStackArray.add(armour);
+			}
+
 			// Clear drops
 			event.getDrops().clear();
 
+			// Save items and armour for other methods
 			items.put(player.getName(), itemStackArray);
+			plugin.methods.armour.put(player.getName(), armourStackArray);
 
 			return;
 		}
 
 		String checkFirst = plugin.getConfig().getString(
-				"Groups." + plugin.files.getGroup(player) + ".check first", "save");
+				"Groups." + plugin.files.getGroup(player) + ".check first",
+				"save");
 
 		if (checkFirst.equalsIgnoreCase("save")) {
 
 			// Run save check first
-			items.put(player.getName(), plugin.methods.doSaveCheck(player, event.getDrops()));
+			items.put(player.getName(),
+					plugin.methods.doSaveCheck(player, event.getDrops()));
 
 			// Run delete check afterwards
 			// Remove deleted items from items so they are not given back
 			List<ItemStack> givenItems = items.get(player.getName());
-			List<ItemStack> deletedItems = plugin.methods.doDeleteCheck(player, givenItems);
+			List<ItemStack> deletedItems = plugin.methods.doDeleteCheck(player,
+					givenItems);
 
 			givenItems.removeAll(deletedItems);
 
@@ -96,7 +106,8 @@ public class IDCEvents implements Listener {
 			event.getDrops().removeAll(deletedItems);
 
 			// Run save check afterwards
-			items.put(player.getName(), plugin.methods.doSaveCheck(player, event.getDrops()));
+			items.put(player.getName(),
+					plugin.methods.doSaveCheck(player, event.getDrops()));
 		}
 	}
 
@@ -120,25 +131,28 @@ public class IDCEvents implements Listener {
 		// Give player saved EXP
 		if (plugin.files.getExpLossUsage(player)) {
 			if (!player.hasPermission("idc.keepxp")) {
-				if (ExpToKeep.get(playerName) == null) return;
-				
-				plugin.getServer().getScheduler()
+				if (ExpToKeep.get(playerName) == null)
+					return;
+
+		plugin.getServer().getScheduler()
 						.runTaskLater(plugin, new Runnable() {
 
 							public void run() {
-								//	System.out.print("Player already had: " + player.getTotalExperience());
-								//    System.out.print("Giving player " + ExpToKeep.get(playerName) + " EXP!");
 								player.giveExp(ExpToKeep.get(playerName));
-								//	System.out.print("Player now has: " + player.getTotalExperience());
+								ExpToKeep.put(playerName, null);
 							}
 						}, 3L);
 			}
 		}
 
 		plugin.methods.returnItems(player, items.get(playerName));
+
+		// Set everything to null so GC can do his work
 		count.put(playerName, null);
 		items.put(playerName, null);
+		plugin.methods.armour.put(playerName, null);
 		plugin.methods.whitelistedItems.put(playerName, null);
+		plugin.methods.randomUsed.put(playerName, null);
 	}
 
 	@EventHandler
