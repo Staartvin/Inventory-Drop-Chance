@@ -48,9 +48,15 @@ public class InventoryDropChance extends JavaPlugin {
 		System.out.print("[Inventory Drop Chance] Configuring worlds!");
 
 		// Initialize enabled worlds
-
 		System.out.print("[Inventory Drop Chance] Checking "
 				+ wHandlers.getEnabledWorlds().size() + " worlds!");
+		
+		// Check if the config is set up correctly
+		if (!files.hasAllOptions()) {
+			getLogger().severe("The config is not setup correctly!");
+			getServer().getPluginManager().disablePlugin(this);
+			return;
+		}
 
 		System.out.println("[" + getDescription().getName()
 				+ "] has been enabled!");
@@ -66,7 +72,7 @@ public class InventoryDropChance extends JavaPlugin {
 	}
 
 	protected boolean checkGroups() {
-		groups = getConfig().getStringList("Group List");
+		groups.addAll(getConfig().getConfigurationSection("Groups").getKeys(false));
 
 		if (verboseLogging) {
 			if (groups == null) {
