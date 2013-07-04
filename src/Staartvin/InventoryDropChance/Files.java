@@ -101,6 +101,8 @@ public class Files {
 		config.addDefault("Groups.ExampleGroup.xp loss", 25);
 		config.addDefault("Groups.ExampleGroup.use xp loss", false);
 		config.addDefault("Groups.ExampleGroup.check first", "save");
+		
+		config.addDefault("Updater.doCheckUpdate", true);
 
 		if (config.getStringList("Groups.ExampleGroup.blacklist").isEmpty()) {
 			config.set("Groups.ExampleGroup.blacklist",
@@ -133,12 +135,6 @@ public class Files {
 		plugin.files.saveLanguageConfig();
 
 		plugin.verboseLogging = config.getBoolean("verboseLogging");
-
-		if (plugin.verboseLogging) {
-			System.out.print("[Inventory Drop Chance] "
-					+ config.getStringList("Group List").size()
-					+ " groups found!");
-		}
 	}
 
 	protected boolean getExpLossUsage(Player player) {
@@ -231,4 +227,8 @@ public class Files {
 		
 		return allIsRight;
 	}
-}
+	
+	public boolean doCheckUpdate() {
+		return config.getBoolean("Updater.doCheckUpdate");
+	}
+} 
