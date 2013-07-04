@@ -18,7 +18,7 @@ public class Methods {
 
 	// A list of items that are whitelisted from the inv and should be given back
 	protected HashMap<String, List<ItemStack>> whitelistedItems = new HashMap<String, List<ItemStack>>();
-	
+
 	// Armour that will be given back on respawn
 	protected HashMap<String, List<ItemStack>> armour = new HashMap<String, List<ItemStack>>();
 
@@ -67,21 +67,24 @@ public class Methods {
 
 		// Do we need to check?
 		boolean doCheck = true;
-		
+
 		// Calculate amount of items not being dropped
 		double calculated;
 		if (plugin.wgClass.isWorldGuardReady()) {
 			calculated = drops.size()
 					* (plugin.wgClass.wgHandler.getRetainPercentage(player) / 100d);
-			if (plugin.wgClass.wgHandler.getRetainPercentage(player) == 100) doCheck = false;
+			if (plugin.wgClass.wgHandler.getRetainPercentage(player) == 100)
+				doCheck = false;
 		} else {
 			calculated = drops.size()
 					* (plugin.files.getRetainPercentage(player) / 100d);
-			if (plugin.files.getRetainPercentage(player) == 100) doCheck = false;
+			if (plugin.files.getRetainPercentage(player) == 100)
+				doCheck = false;
 		}
-		
+
 		// If retain percentage is 100%, don't check. Just return everything.
-		if (!doCheck) return itemsToCheck;
+		if (!doCheck)
+			return itemsToCheck;
 
 		// Initialize new ItemStack array
 		List<ItemStack> itemstackarray = new ArrayList<ItemStack>();
@@ -106,7 +109,7 @@ public class Methods {
 
 		// Remove all kept items from the drops
 		drops.removeAll(keptItems);
-		
+
 		// Drop all blacklisted items (They are forced to drop)
 		drops.addAll(blacklisted);
 
@@ -139,22 +142,25 @@ public class Methods {
 
 		// Do we need to check?
 		boolean doCheck = true;
-		
+
 		// Calculate amount of items being deleted
 		double calculated;
 		if (plugin.wgClass.isWorldGuardReady()) {
 			calculated = itemsToCheck.size()
 					* (plugin.wgClass.wgHandler.getDeletePercentage(player) / 100d);
-			if (plugin.wgClass.wgHandler.getDeletePercentage(player) == 0) doCheck = false;
+			if (plugin.wgClass.wgHandler.getDeletePercentage(player) == 0)
+				doCheck = false;
 		} else {
 			calculated = itemsToCheck.size()
 					* (plugin.files.getDeletePercentage(player) / 100d);
-			if (plugin.files.getDeletePercentage(player) == 0) doCheck = false;
+			if (plugin.files.getDeletePercentage(player) == 0)
+				doCheck = false;
 		}
-		
+
 		// If delete percentage is 0, return everything
-		if (!doCheck) return itemsToCheck;
-		
+		if (!doCheck)
+			return itemsToCheck;
+
 		List<ItemStack> deletedItems = new ArrayList<ItemStack>();
 
 		// Clear slots used
@@ -288,7 +294,7 @@ public class Methods {
 	}
 
 	protected void returnItems(Player player, List<ItemStack> items) {
-		
+
 		String playerName = player.getName();
 
 		int count = 0;
@@ -312,55 +318,58 @@ public class Methods {
 		// Give whitelisted items
 		if (whitelistedItems.get(playerName) != null) {
 			for (ItemStack item : whitelistedItems.get(playerName)) {
-				
+
 				// If inv is full
 				if (replacement.firstEmpty() < 0) {
 					player.getWorld().dropItem(player.getLocation(), item);
 					continue;
 				}
-				
+
 				replacement.addItem(item);
 			}
 		}
-		
-		
+
 		// Give armour back (This will only give armour when a player has idc.keepallitems)
 		if (this.armour.get(playerName) != null) {
-			for (ItemStack armour: this.armour.get(playerName)) {
-				
+			for (ItemStack armour : this.armour.get(playerName)) {
+
 				if (isHelmet(armour)) {
 					if (replacement.getHelmet() != null) {
-						player.getWorld().dropItem(player.getLocation(), armour);
+						player.getWorld()
+								.dropItem(player.getLocation(), armour);
 						continue;
 					} else {
 						replacement.setHelmet(armour);
 						continue;
 					}
 				}
-				
+
 				if (isChestplate(armour)) {
 					if (replacement.getChestplate() != null) {
-						player.getWorld().dropItem(player.getLocation(), armour);
+						player.getWorld()
+								.dropItem(player.getLocation(), armour);
 						continue;
 					} else {
 						replacement.setChestplate(armour);
 						continue;
 					}
 				}
-				
+
 				if (isLeggings(armour)) {
 					if (replacement.getLeggings() != null) {
-						player.getWorld().dropItem(player.getLocation(), armour);
+						player.getWorld()
+								.dropItem(player.getLocation(), armour);
 						continue;
 					} else {
 						replacement.setLeggings(armour);
 						continue;
 					}
 				}
-				
+
 				if (isBoots(armour)) {
 					if (replacement.getBoots() != null) {
-						player.getWorld().dropItem(player.getLocation(), armour);
+						player.getWorld()
+								.dropItem(player.getLocation(), armour);
 						continue;
 					} else {
 						replacement.setBoots(armour);
@@ -369,35 +378,34 @@ public class Methods {
 				} else {
 					// If inv is full
 					if (replacement.firstEmpty() < 0) {
-						player.getWorld().dropItem(player.getLocation(), armour);
+						player.getWorld()
+								.dropItem(player.getLocation(), armour);
 						continue;
 					}
-					
+
 					replacement.addItem(armour);
 				}
 			}
 		}
-		
+
 		if (player.hasPermission("idc.keepallitems")) {
 			player.sendMessage(ChatColor.GOLD + plugin.files.ALL_ITEMS_SURVIVED);
 			return;
 		}
-		
+
 		String itemMessage = plugin.files.ITEMS_MESSAGE_ON_RESPAWN.replace(
 				"{0}", count + "");
 		String percentageMessage = "";
 
-		if (plugin
-				.getConfig()
-				.getString(
-						"Groups." + plugin.files.getGroup(player)
-								+ ".check first").equalsIgnoreCase("save")) {
+		String checkFirst = plugin.getConfig().getString(
+				"Groups." + plugin.files.getGroup(player) + ".check first");
+
+		if (checkFirst == null)
+			checkFirst = "save";
+
+		if (checkFirst.equalsIgnoreCase("save")) {
 			percentageMessage = plugin.files.PERCENTAGE_MESSAGE_ON_RESPAWN;
-		} else if (plugin
-				.getConfig()
-				.getString(
-						"Groups." + plugin.files.getGroup(player)
-								+ ".check first").equalsIgnoreCase("delete")) {
+		} else if (checkFirst.equalsIgnoreCase("delete")) {
 			percentageMessage = plugin.files.INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN;
 		} else {
 			percentageMessage = plugin.files.PERCENTAGE_MESSAGE_ON_RESPAWN;
@@ -419,28 +427,28 @@ public class Methods {
 			player.sendMessage(ChatColor.RED + percentageMessage);
 		}
 	}
-	
+
 	boolean isHelmet(ItemStack item) {
 		int ID = item.getTypeId();
-		
+
 		return (ID == 298 || ID == 302 || ID == 306 || ID == 310 || ID == 314);
 	}
-	
+
 	boolean isChestplate(ItemStack item) {
 		int ID = item.getTypeId();
-		
+
 		return (ID == 299 || ID == 303 || ID == 307 || ID == 311 || ID == 315);
 	}
-	
+
 	boolean isLeggings(ItemStack item) {
 		int ID = item.getTypeId();
-		
+
 		return (ID == 300 || ID == 304 || ID == 308 || ID == 312 || ID == 316);
 	}
-	
+
 	boolean isBoots(ItemStack item) {
 		int ID = item.getTypeId();
-		
+
 		return (ID == 301 || ID == 305 || ID == 309 || ID == 313 || ID == 317);
 	}
 }
