@@ -3,13 +3,18 @@ package Staartvin.InventoryDropChance;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
+
+import Staartvin.InventoryDropChance.updater.Updater;
 
 public class IDCEvents implements Listener {
 
@@ -166,5 +171,27 @@ public class IDCEvents implements Listener {
 		}
 		if (!dead.get(playerName))
 			return;
+	}
+	
+	@EventHandler
+	protected void onServerJoin(PlayerJoinEvent event) {
+
+		final Player player = event.getPlayer();
+		
+		plugin.getUpdaterStatus();
+		
+		if (player.hasPermission("idc.noticeonupdate")) {
+			if (plugin.updater != null && plugin.updater.getResult().equals(Updater.UpdateResult.UPDATE_AVAILABLE)) {
+				plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
+
+					@Override
+					public void run() {
+						// TODO Auto-generated method stub
+						player.sendMessage(ChatColor.GREEN + plugin.updater.getLatestVersionString() + ChatColor.GOLD + " is now available for download!");
+					}
+					
+				}, 10L);
+			}
+		}
 	}
 }
