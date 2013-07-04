@@ -3,8 +3,11 @@ package Staartvin.InventoryDropChance;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import Staartvin.InventoryDropChance.updater.Updater;
 
 public class InventoryDropChance extends JavaPlugin {
 
@@ -17,6 +20,7 @@ public class InventoryDropChance extends JavaPlugin {
 	WorldGuardClass wgClass = new WorldGuardClass(this);
 	WorldHandlers wHandlers = new WorldHandlers(this);
 	public Methods methods = new Methods(this);
+	public Updater updater;
 
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(events, this);
@@ -50,12 +54,18 @@ public class InventoryDropChance extends JavaPlugin {
 		// Initialize enabled worlds
 		System.out.print("[Inventory Drop Chance] Checking "
 				+ wHandlers.getEnabledWorlds().size() + " worlds!");
-		
+
 		// Check if the config is set up correctly
 		if (!files.hasAllOptions()) {
 			getLogger().severe("The config is not setup correctly!");
 			getServer().getPluginManager().disablePlugin(this);
 			return;
+		}
+		
+		// Check for a newer version
+		if (getConfig().getBoolean("Updater.doCheckUpdate")) {
+			updater = new Updater(this, "inventory-drop-chance", this.getFile(),
+					Updater.UpdateType.NO_DOWNLOAD, false);
 		}
 
 		System.out.println("[" + getDescription().getName()
@@ -72,7 +82,8 @@ public class InventoryDropChance extends JavaPlugin {
 	}
 
 	protected boolean checkGroups() {
-		groups.addAll(getConfig().getConfigurationSection("Groups").getKeys(false));
+		groups.addAll(getConfig().getConfigurationSection("Groups").getKeys(
+				false));
 
 		if (verboseLogging) {
 			if (groups == null) {
@@ -89,12 +100,18 @@ public class InventoryDropChance extends JavaPlugin {
 		}
 		return true;
 	}
-	
+
 	protected List<String> getWhitelistedItems(String group) {
 		return getConfig().getStringList("Groups." + group + ".whitelist");
 	}
-	
+
 	protected List<String> getBlacklistedItems(String group) {
 		return getConfig().getStringList("Groups." + group + ".blacklist");
+	}
+	
+	public void getUpdaterStatus() {
+		if (!getConfig().getBoolean("Updater.doCheckUpdate")) return;
+		updater = new Updater(this, "inventory-drop-chance", this.getFile(),
+				Updater.UpdateType.NO_DOWNLOAD, false);
 	}
 }
