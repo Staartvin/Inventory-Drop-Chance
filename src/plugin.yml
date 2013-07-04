@@ -1,8 +1,8 @@
-name: Inventory Drop Chance
+name: InventoryDropChance
 author: Staartvin
 website: http://dev.bukkit.org/server-mods/inventory-drop-chance/
 main: Staartvin.InventoryDropChance.InventoryDropChance
-version: 1.4
+version: 1.4.1
 description: Control the dropped items or dropped xp on death
 softdepend: [WorldGuard, WGCustomFlags]
 permissions:
@@ -12,4 +12,7 @@ permissions:
       idc.keepxp:
         description: A player with this permission will not lose any xp.
         default: false
+      idc.noticeonupdate:
+        description: A player with this permission will get notified when a newer version is available.
+        default: op
 commands:
