@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Arrays;
+import java.util.Set;
 import java.util.logging.Level;
 
 import org.bukkit.configuration.file.FileConfiguration;
@@ -22,6 +23,7 @@ public class Files {
 	public String INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN = "";
 	public String ITEMS_MESSAGE_ON_RESPAWN = "";
 	public String ALL_ITEMS_SURVIVED = "";
+	public FileConfiguration config;
 
 	// Player Config Methods
 	protected void reloadLanguageConfig() {
@@ -74,13 +76,12 @@ public class Files {
 	}
 
 	protected void loadConfiguration() {
-		FileConfiguration config = plugin.getConfig();
-		config
-				.options()
+		config = plugin.getConfig();
+
+		config.options()
 				.header("Inventory Drop Chance v"
 						+ plugin.getDescription().getVersion()
 						+ " Config"
-						+ "\nMake sure that a group listed in 'Group List' is also defined as a group in 'Groups'!"
 						+ "\nAn item on the whitelist will always be kept."
 						+ "\nAn item on the blacklist will always be dropped."
 						+ "\nRetain percentage is the percentage of the inv that will be kept. If this is 0, nothing will be kept and everything is dropped"
@@ -91,33 +92,36 @@ public class Files {
 						+ "\n    'delete' = First the delete check will be run, then the save check. This way the save check will only check the not-deleted items");
 
 		config.addDefault("verboseLogging", true);
-		config.addDefault("Group List", Arrays.asList(new String[] {"ExampleGroup"}));
-		config.addDefault("DisabledWorlds", Arrays.asList(new String[] {"DisabledWorld", "DisabledWorld_nether",
-				"DisabledWorld_the_end"}));
+		config.addDefault(
+				"DisabledWorlds",
+				Arrays.asList(new String[] { "DisabledWorld",
+						"DisabledWorld_nether", "DisabledWorld_the_end" }));
 		config.addDefault("Groups.ExampleGroup.retain percentage", 50);
 		config.addDefault("Groups.ExampleGroup.delete percentage", 0);
 		config.addDefault("Groups.ExampleGroup.xp loss", 25);
 		config.addDefault("Groups.ExampleGroup.use xp loss", false);
 		config.addDefault("Groups.ExampleGroup.check first", "save");
 
-		if (config.getStringList("Groups.ExampleGroup.blacklist")
-				.isEmpty()) {
+		if (config.getStringList("Groups.ExampleGroup.blacklist").isEmpty()) {
 			config.set("Groups.ExampleGroup.blacklist",
 					Arrays.asList(new String[] { "35:7", "273" }));
 		}
 
-		if (config.getStringList("Groups.ExampleGroup.whitelist")
-				.isEmpty()) {
+		if (config.getStringList("Groups.ExampleGroup.whitelist").isEmpty()) {
 			config.set("Groups.ExampleGroup.whitelist",
 					Arrays.asList(new String[] { "276", "25" }));
 		}
 
 		plugin.files.getLanguageConfig().addDefault("ITEMS_MESSAGE_ON_RESPAWN",
 				"{0} items have survived your death!");
-		plugin.files.getLanguageConfig().addDefault("PERCENTAGE_MESSAGE_ON_RESPAWN",
-				"{0} of your old inventory has been saved and {1} of that has been deleted.");
-		plugin.files.getLanguageConfig().addDefault("INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN",
-				"{1} of your old inventory has been deleted and {0} of that has been saved.");
+		plugin.files
+				.getLanguageConfig()
+				.addDefault("PERCENTAGE_MESSAGE_ON_RESPAWN",
+						"{0} of your old inventory has been saved and {1} of that has been deleted.");
+		plugin.files
+				.getLanguageConfig()
+				.addDefault("INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN",
+						"{1} of your old inventory has been deleted and {0} of that has been saved.");
 		plugin.files.getLanguageConfig().addDefault("ALL_ITEMS_SURVIVED",
 				"All your items survived your death!");
 
@@ -136,7 +140,7 @@ public class Files {
 					+ " groups found!");
 		}
 	}
-	
+
 	protected boolean getExpLossUsage(Player player) {
 
 		String group = getGroup(player);
@@ -144,7 +148,7 @@ public class Files {
 		if (group == null)
 			return false;
 		else
-			return plugin.getConfig().getBoolean(
+			return config.getBoolean(
 					"Groups." + group + ".use xp loss");
 	}
 
@@ -155,7 +159,7 @@ public class Files {
 		if (group == null)
 			return 50;
 		else
-			return plugin.getConfig().getInt(
+			return config.getInt(
 					"Groups." + group + ".retain percentage");
 	}
 
@@ -166,10 +170,10 @@ public class Files {
 		if (group == null)
 			return 50;
 		else
-			return plugin.getConfig().getInt(
+			return config.getInt(
 					"Groups." + group + ".delete percentage");
 	}
-	
+
 	protected String getGroup(Player player) {
 		for (String groupName : plugin.groups) {
 			if (player.hasPermission("idc.group." + groupName)) {
@@ -178,13 +182,53 @@ public class Files {
 		}
 		return null;
 	}
-	
+
 	protected int getExpPercentage(Player player) {
 		String group = getGroup(player);
 
 		if (group == null)
 			return 50;
 		else
-			return plugin.getConfig().getInt("Groups." + group + ".xp loss");
+			return config.getInt("Groups." + group + ".xp loss");
+	}
+
+	public boolean hasAllOptions() {
+		Set<String> groupSet = config.getConfigurationSection("Groups").getKeys(false);
+		boolean allIsRight = true;
+		
+		// Check every single option
+		for (String group: groupSet) {
+			if(config.getInt("Groups." + group + ".retain percentage", -1) == -1) {
+				plugin.getLogger().warning("Retain Percentage for group '" + group + "' is not found!");
+				allIsRight = false;
+			}
+			
+			if(config.getInt("Groups." + group + ".delete percentage", -1) == -1) {
+				plugin.getLogger().warning("Delete Percentage for group '" + group + "' is not found!");
+				allIsRight = false;
+			}
+			
+			if(config.getInt("Groups." + group + ".xp loss", -1) == -1) {
+				plugin.getLogger().warning("XP Loss for group '" + group + "' is not found!");
+				allIsRight = false;
+			}
+			
+			if(config.getString("Groups." + group + ".check first", null) == null) {
+				plugin.getLogger().warning("Check first for group '" + group + "' is not found!");
+				allIsRight = false;
+			}
+			
+			if(config.getList("Groups." + group + ".blacklist") == null) {
+				plugin.getLogger().warning("Blacklist for group '" + group + "' is not found!");
+				allIsRight = false;
+			}
+			
+			if(config.getList("Groups." + group + ".whitelist") == null) {
+				plugin.getLogger().warning("Whitelist for group '" + group + "' is not found!");
+				allIsRight = false;
+			}
+		}
+		
+		return allIsRight;
 	}
 }
