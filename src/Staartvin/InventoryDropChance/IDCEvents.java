@@ -14,6 +14,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 
+import Staartvin.InventoryDropChance.experience.ExperienceManager;
 import Staartvin.InventoryDropChance.updater.Updater;
 
 public class IDCEvents implements Listener {
@@ -31,6 +32,9 @@ public class IDCEvents implements Listener {
 
 	// The amount of EXP to give back on respawn
 	protected HashMap<String, Integer> ExpToKeep = new HashMap<String, Integer>();
+	
+	// A hashmap containing all ExperienceManager objects
+	protected HashMap<String, ExperienceManager> expManHandler = new HashMap<String, ExperienceManager>();
 
 	public IDCEvents(InventoryDropChance plugin) {
 		this.plugin = plugin;
@@ -143,7 +147,7 @@ public class IDCEvents implements Listener {
 						.runTaskLater(plugin, new Runnable() {
 
 							public void run() {
-								player.giveExp(ExpToKeep.get(playerName));
+								expManHandler.get(playerName).changeExp(ExpToKeep.get(playerName));
 								ExpToKeep.put(playerName, null);
 							}
 						}, 3L);
@@ -177,6 +181,12 @@ public class IDCEvents implements Listener {
 	protected void onServerJoin(PlayerJoinEvent event) {
 
 		final Player player = event.getPlayer();
+		
+		if (!expManHandler.containsKey(player.getName())) {
+			ExperienceManager expMan = new ExperienceManager(player);
+			
+			expManHandler.put(player.getName(), expMan);
+		}
 		
 		plugin.getUpdaterStatus();
 		
