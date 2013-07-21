@@ -10,6 +10,8 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
+import Staartvin.InventoryDropChance.experience.ExperienceManager;
+
 public class Methods {
 	private InventoryDropChance plugin;
 
@@ -125,10 +127,11 @@ public class Methods {
 		}
 
 		if (plugin.files.getExpLossUsage(player)) {
-			int calEXP = calculateExp(player.getTotalExperience(), player);
+			ExperienceManager expMan = plugin.events.expManHandler.get(player.getName());
+			int calEXP = calculateExp(expMan.getCurrentExp(), player);
 
 			// Dropped exp = total exp of player - (total exp * xploss percentage)
-			event.setDroppedExp(player.getTotalExperience() - calEXP);
+			event.setDroppedExp(expMan.getCurrentExp() - calEXP);
 
 			// Save the exp to give back
 			plugin.events.ExpToKeep.put(player.getName(), calEXP);
@@ -157,9 +160,9 @@ public class Methods {
 				doCheck = false;
 		}
 
-		// If delete percentage is 0, return everything
+		// If delete percentage is 0, return nothing.
 		if (!doCheck)
-			return itemsToCheck;
+			return new ArrayList<ItemStack>();
 
 		List<ItemStack> deletedItems = new ArrayList<ItemStack>();
 
