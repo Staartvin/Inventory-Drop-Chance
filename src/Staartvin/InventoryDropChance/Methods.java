@@ -108,9 +108,17 @@ public class Methods {
 
 		// Clear slots used
 		randomUsed.put(playerName, new ArrayList<Integer>());
-
+		
 		// Remove all kept items from the drops
-		drops.removeAll(keptItems);
+		// Can't remove drops.removeAll() because that would delete everything when there is only 1 item.
+		for (ItemStack keptItem: keptItems) {
+			for (ItemStack drop: drops) {
+				if (drop.isSimilar(keptItem)) {
+					drops.remove(drop);
+					break;
+				}
+			}
+		}
 
 		// Drop all blacklisted items (They are forced to drop)
 		drops.addAll(blacklisted);
