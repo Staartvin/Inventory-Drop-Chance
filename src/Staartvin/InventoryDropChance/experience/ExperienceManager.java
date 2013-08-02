@@ -17,6 +17,7 @@ import org.bukkit.entity.Player;
  * See http://forums.bukkit.org/threads/experiencemanager-was-experienceutils-make-giving-taking-exp-a-bit-more-intuitive.54450/page-3#post-1273622
  * 
  */
+@Deprecated
 public class ExperienceManager {
 	// this is to stop the lookup tables growing without control
 	private static int hardMaxLevel = 100000;
