@@ -92,8 +92,6 @@ public class Methods {
 			itemstackarray.add(drops.get(slot));
 			keptItems.add(drops.get(slot));
 		}
-		
-		System.out.print("KeptItems: " + keptItems.size());
 
 		// Clear slots used
 		randomUsed.put(playerName, new ArrayList<Integer>());
