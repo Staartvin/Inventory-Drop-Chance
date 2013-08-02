@@ -98,10 +98,23 @@ public class IDCEvents implements Listener {
 					givenItems);
 
 			// Remove all deleted items from the given items
-			givenItems.removeAll(deletedItems);
-			
+			for (ItemStack deletedItem: deletedItems) {
+				for (ItemStack givenItem: givenItems) {
+					if (givenItem.isSimilar(deletedItem)) {
+						givenItems.remove(givenItem);
+						break;
+					}
+				}
+			}
 			// Remove the deleted items from the drops so they are not dropped as well
-			event.getDrops().removeAll(deletedItems);
+			/*for (ItemStack deletedItem: deletedItems) {
+				for (ItemStack drop: event.getDrops()) {
+					if (drop.isSimilar(deletedItem)) {
+						event.getDrops().remove(drop);
+						break;
+					}
+				}
+			}*/
 
 			// Update given items
 			items.put(player.getName(), givenItems);
