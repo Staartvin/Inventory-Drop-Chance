@@ -10,7 +10,7 @@ import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-import Staartvin.InventoryDropChance.experience.ExperienceManager;
+//import Staartvin.InventoryDropChance.experience.ExperienceManager;
 
 public class Methods {
 	private InventoryDropChance plugin;
@@ -34,9 +34,7 @@ public class Methods {
 
 		String playerName = player.getName();
 		List<ItemStack> drops = itemsToCheck;
-
-		// FIXME: ARMOR IS NOT BEING KEPT OR CHECKED OR WHATEVER. THIS IS BECAUSE IT'S NOT PART OF inv.getContents()
-
+		
 		// Initialise a new array that will hold all items that will be forced to drop (I.E. Blacklisted)
 		List<ItemStack> blacklisted = new ArrayList<ItemStack>();
 
@@ -67,27 +65,16 @@ public class Methods {
 		// Make the whitelisted items global so returnItems() can add them to the inventory
 		whitelistedItems.put(playerName, whitelisted);
 
-		// Do we need to check?
-		boolean doCheck = true;
-
 		// Calculate amount of items not being dropped
 		double calculated;
 		if (plugin.wgClass.isWorldGuardReady()) {
 			calculated = drops.size()
 					* (plugin.wgClass.wgHandler.getRetainPercentage(player) / 100d);
-			if (plugin.wgClass.wgHandler.getRetainPercentage(player) == 100)
-				doCheck = false;
 		} else {
 			calculated = drops.size()
 					* (plugin.files.getRetainPercentage(player) / 100d);
-			if (plugin.files.getRetainPercentage(player) == 100)
-				doCheck = false;
 		}
-
-		// If retain percentage is 100%, don't check. Just return everything.
-		if (!doCheck)
-			return itemsToCheck;
-
+		
 		// Initialize new ItemStack array
 		List<ItemStack> itemstackarray = new ArrayList<ItemStack>();
 
@@ -105,6 +92,8 @@ public class Methods {
 			itemstackarray.add(drops.get(slot));
 			keptItems.add(drops.get(slot));
 		}
+		
+		System.out.print("KeptItems: " + keptItems.size());
 
 		// Clear slots used
 		randomUsed.put(playerName, new ArrayList<Integer>());
@@ -135,11 +124,12 @@ public class Methods {
 		}
 
 		if (plugin.files.getExpLossUsage(player)) {
-			ExperienceManager expMan = plugin.events.expManHandler.get(player.getName());
-			int calEXP = calculateExp(expMan.getCurrentExp(), player);
+			//ExperienceManager expMan = plugin.events.expManHandler.get(player.getName());
+			
+			int calEXP = calculateExp(player.getTotalExperience(), player);
 
 			// Dropped exp = total exp of player - (total exp * xploss percentage)
-			event.setDroppedExp(expMan.getCurrentExp() - calEXP);
+			event.setDroppedExp(player.getTotalExperience() - calEXP);
 
 			// Save the exp to give back
 			plugin.events.ExpToKeep.put(player.getName(), calEXP);

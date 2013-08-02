@@ -14,7 +14,7 @@ import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 
-import Staartvin.InventoryDropChance.experience.ExperienceManager;
+//import Staartvin.InventoryDropChance.experience.ExperienceManager;
 import Staartvin.InventoryDropChance.updater.Updater;
 
 public class IDCEvents implements Listener {
@@ -34,7 +34,7 @@ public class IDCEvents implements Listener {
 	protected HashMap<String, Integer> ExpToKeep = new HashMap<String, Integer>();
 	
 	// A hashmap containing all ExperienceManager objects
-	protected HashMap<String, ExperienceManager> expManHandler = new HashMap<String, ExperienceManager>();
+	//protected HashMap<String, ExperienceManager> expManHandler = new HashMap<String, ExperienceManager>();
 
 	public IDCEvents(InventoryDropChance plugin) {
 		this.plugin = plugin;
@@ -97,13 +97,14 @@ public class IDCEvents implements Listener {
 			List<ItemStack> deletedItems = plugin.methods.doDeleteCheck(player,
 					givenItems);
 
+			// Remove all deleted items from the given items
 			givenItems.removeAll(deletedItems);
+			
+			// Remove the deleted items from the drops so they are not dropped as well
+			event.getDrops().removeAll(deletedItems);
 
 			// Update given items
 			items.put(player.getName(), givenItems);
-
-			// Remove the deleted items from the drops so they are not dropped as well
-			event.getDrops().removeAll(deletedItems);
 
 		} else if (checkFirst.equalsIgnoreCase("delete")) {
 
@@ -147,7 +148,7 @@ public class IDCEvents implements Listener {
 						.runTaskLater(plugin, new Runnable() {
 
 							public void run() {
-								expManHandler.get(playerName).changeExp(ExpToKeep.get(playerName));
+								player.giveExp(ExpToKeep.get(playerName));
 								ExpToKeep.put(playerName, null);
 							}
 						}, 3L);
@@ -182,11 +183,11 @@ public class IDCEvents implements Listener {
 
 		final Player player = event.getPlayer();
 		
-		if (!expManHandler.containsKey(player.getName())) {
+/*		if (!expManHandler.containsKey(player.getName())) {
 			ExperienceManager expMan = new ExperienceManager(player);
 			
 			expManHandler.put(player.getName(), expMan);
-		}
+		} */
 		
 		plugin.getUpdaterStatus();
 		
