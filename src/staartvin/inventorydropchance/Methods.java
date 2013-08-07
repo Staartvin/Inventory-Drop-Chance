@@ -27,13 +27,13 @@ public class Methods {
 		plugin = instance;
 	}
 
-	// Get items that are saved
+	// Returns items that are saved
 	public List<ItemStack> doSaveCheck(Player player,
 			List<ItemStack> itemsToCheck) {
 
 		String playerName = player.getName();
 		List<ItemStack> drops = itemsToCheck;
-		
+
 		// Initialise a new array that will hold all items that will be forced to drop (I.E. Blacklisted)
 		List<ItemStack> blacklisted = new ArrayList<ItemStack>();
 
@@ -51,7 +51,8 @@ public class Methods {
 					// We don't want to keep an item that is forced to be dropped.
 					drops.remove(item);
 					continue;
-				} else if (plugin.getListHandler().isWhitelistedItem(item, group)) {
+				} else if (plugin.getListHandler().isWhitelistedItem(item,
+						group)) {
 					whitelisted.add(item);
 
 					// We don't want the same item given more than once, so we remove it from the drops
@@ -66,14 +67,10 @@ public class Methods {
 
 		// Calculate amount of items not being dropped
 		double calculated;
-		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
-			calculated = drops.size()
-					* (plugin.getWorldGuardClass().wgHandler.getRetainPercentage(player) / 100d);
-		} else {
-			calculated = drops.size()
-					* (plugin.getFiles().getRetainPercentage(player) / 100d);
-		}
-		
+
+		calculated = drops.size()
+				* (plugin.getFiles().getRetainPercentage(player) / 100d);
+
 		// Initialize new ItemStack array
 		List<ItemStack> itemstackarray = new ArrayList<ItemStack>();
 
@@ -94,11 +91,11 @@ public class Methods {
 
 		// Clear slots used
 		randomUsed.put(playerName, new ArrayList<Integer>());
-		
+
 		// Remove all kept items from the drops
 		// Can't remove drops.removeAll() because that would delete everything when there is only 1 item.
-		for (ItemStack keptItem: keptItems) {
-			for (ItemStack drop: drops) {
+		for (ItemStack keptItem : keptItems) {
+			for (ItemStack drop : drops) {
 				if (drop.isSimilar(keptItem)) {
 					drops.remove(drop);
 					break;
@@ -113,6 +110,7 @@ public class Methods {
 		return itemstackarray;
 	}
 
+	// Return items that are deleted
 	public List<ItemStack> doDeleteCheck(Player player,
 			List<ItemStack> itemsToCheck) {
 
@@ -123,17 +121,11 @@ public class Methods {
 
 		// Calculate amount of items being deleted
 		double calculated;
-		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
-			calculated = itemsToCheck.size()
-					* (plugin.getWorldGuardClass().wgHandler.getDeletePercentage(player) / 100d);
-			if (plugin.getWorldGuardClass().wgHandler.getDeletePercentage(player) == 0)
-				doCheck = false;
-		} else {
-			calculated = itemsToCheck.size()
-					* (plugin.getFiles().getDeletePercentage(player) / 100d);
-			if (plugin.getFiles().getDeletePercentage(player) == 0)
-				doCheck = false;
-		}
+		calculated = itemsToCheck.size()
+				* (plugin.getFiles().getDeletePercentage(player) / 100d);
+		
+		if (plugin.getFiles().getDeletePercentage(player) == 0)
+			doCheck = false;
 
 		// If delete percentage is 0, return nothing.
 		if (!doCheck)
@@ -193,21 +185,12 @@ public class Methods {
 
 		int count = 0;
 		PlayerInventory replacement = player.getInventory();
-		ItemStack[] newinv = new ItemStack[36];
 
-		for (int i = 0; i < newinv.length; i++) {
-			if (i >= items.size()) {
-				break;
-			}
-
-			newinv[i] = items.get(i);
-			if (newinv[i] == null) {
-				break;
-			}
+		// Give kept items
+		for (ItemStack item: items) {
+			replacement.addItem(item);
 			count++;
 		}
-
-		replacement.setContents(newinv);
 
 		// Give whitelisted items
 		if (whitelistedItems.get(playerName) != null) {
@@ -282,44 +265,7 @@ public class Methods {
 			}
 		}
 
-		if (player.hasPermission("idc.keepallitems")) {
-			player.sendMessage(ChatColor.GOLD + plugin.getFiles().ALL_ITEMS_SURVIVED);
-			return;
-		}
-
-		String itemMessage = plugin.getFiles().ITEMS_MESSAGE_ON_RESPAWN.replace(
-				"{0}", count + "");
-		String percentageMessage = "";
-
-		String checkFirst = plugin.getConfig().getString(
-				"Groups." + plugin.getFiles().getGroup(player) + ".check first");
-
-		if (checkFirst == null)
-			checkFirst = "save";
-
-		if (checkFirst.equalsIgnoreCase("save")) {
-			percentageMessage = plugin.getFiles().PERCENTAGE_MESSAGE_ON_RESPAWN;
-		} else if (checkFirst.equalsIgnoreCase("delete")) {
-			percentageMessage = plugin.getFiles().INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN;
-		} else {
-			percentageMessage = plugin.getFiles().PERCENTAGE_MESSAGE_ON_RESPAWN;
-		}
-
-		player.sendMessage(ChatColor.GOLD + itemMessage);
-		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
-			percentageMessage = percentageMessage.replace("{0}",
-					plugin.getWorldGuardClass().wgHandler.getRetainPercentage(player) + "%")
-					.replace(
-							"{1}",
-							plugin.getWorldGuardClass().wgHandler
-									.getDeletePercentage(player) + "%");
-			player.sendMessage(ChatColor.RED + percentageMessage);
-		} else {
-			percentageMessage = percentageMessage.replace("{0}",
-					plugin.getFiles().getRetainPercentage(player) + "%").replace(
-					"{1}", plugin.getFiles().getDeletePercentage(player) + "%");
-			player.sendMessage(ChatColor.RED + percentageMessage);
-		}
+		sendCorrectMessages(player, count);
 	}
 
 	boolean isHelmet(ItemStack item) {
@@ -344,5 +290,158 @@ public class Methods {
 		int ID = item.getTypeId();
 
 		return (ID == 301 || ID == 305 || ID == 309 || ID == 313 || ID == 317);
+	}
+
+	// Returns kept items
+	public List<ItemStack> doPerStackCheck(Player player,
+			List<ItemStack> itemsToCheck) {
+		// Initialise empty array that will hold all kept items
+		List<ItemStack> keptItems = new ArrayList<ItemStack>();
+
+		// Automatically corrected when WorldGuard is found
+		int rPercentage = plugin.getFiles().getRetainPercentage(player), dPercentage = plugin
+				.getFiles().getDeletePercentage(player);
+
+		String checkFirst = plugin.getFiles().getCheckFirst(player);
+
+		// Go through every stack
+		for (ItemStack item : itemsToCheck) {
+			int amount = item.getAmount();
+
+			@SuppressWarnings("unused")
+			// dropAmount is just for human logic
+			int saveAmount = 0, deleteAmount = 0, dropAmount = 0, keptAmount = 0;
+			// Copy of item
+			ItemStack newItem = item.clone();
+
+			// First save, then delete
+			if (checkFirst.equalsIgnoreCase("save")) {
+
+				saveAmount = (int) Math.round(amount * (rPercentage / 100d));
+
+				dropAmount = amount - saveAmount;
+
+				deleteAmount = (int) Math.round(saveAmount
+						* (dPercentage / 100d));
+
+				keptAmount = (saveAmount - deleteAmount);
+
+			} else if (checkFirst.equalsIgnoreCase("delete")) {
+				deleteAmount = (int) Math.round(amount * (dPercentage / 100d));
+
+				saveAmount = (int) Math.round((amount - deleteAmount)
+						* (rPercentage / 100d));
+
+				dropAmount = (amount - deleteAmount) - saveAmount;
+
+				keptAmount = saveAmount;
+			}
+			
+			newItem.setAmount(keptAmount);
+
+			keptItems.add(newItem);
+		}
+
+		return keptItems;
+	}
+
+	// Returns dropped items
+	public List<ItemStack> getDroppedItems(Player player,
+			List<ItemStack> itemsToCheck) {
+		// Initialise empty array that will hold all (soon to be) dropped items
+		List<ItemStack> droppedItems = new ArrayList<ItemStack>();
+
+		// Automatically corrected when WorldGuard is found
+		int rPercentage = plugin.getFiles().getRetainPercentage(player), dPercentage = plugin
+				.getFiles().getDeletePercentage(player);
+
+		String checkFirst = plugin.getFiles().getCheckFirst(player);
+
+		// Go through every stack
+		for (ItemStack item : itemsToCheck) {
+			int amount = item.getAmount();
+
+			int saveAmount = 0, deleteAmount = 0, dropAmount = 0;
+
+			// First save, then delete
+			if (checkFirst.equalsIgnoreCase("save")) {
+
+				saveAmount = (int) Math.round(amount * (rPercentage / 100d));
+
+				dropAmount = amount - saveAmount;
+
+				deleteAmount = (int) Math.round(saveAmount
+						* (dPercentage / 100d));
+
+			} else if (checkFirst.equalsIgnoreCase("delete")) {
+				deleteAmount = (int) Math.round(amount * (dPercentage / 100d));
+
+				saveAmount = (int) Math.round((amount - deleteAmount)
+						* (rPercentage / 100d));
+
+				dropAmount = (amount - deleteAmount) - saveAmount;
+			}
+
+			if (dropAmount > 0) {
+				ItemStack newItem = item.clone();
+				newItem.setAmount(dropAmount);
+
+				droppedItems.add(newItem);
+			}
+		}
+
+		return droppedItems;
+	}
+
+	public void sendCorrectMessages(Player player, int count) {
+		if (player.hasPermission("idc.keepallitems")) {
+			player.sendMessage(ChatColor.GOLD
+					+ plugin.getFiles().ALL_ITEMS_SURVIVED);
+			return;
+		}
+
+		String itemMessage = plugin.getFiles().ITEMS_MESSAGE_ON_RESPAWN
+				.replace("{0}", count + "");
+
+		player.sendMessage(ChatColor.GOLD + itemMessage);
+
+		String percentageMessage = "";
+
+		String checkFirst = plugin.getFiles().getCheckFirst(player);
+
+		if (checkFirst == null)
+			checkFirst = "save";
+
+		if (checkFirst.equalsIgnoreCase("save")) {
+
+			if (plugin.getFiles().doPerStackCheck(player)) {
+				percentageMessage = plugin.getFiles().PER_STACK_CHECK_MESSAGE_ON_RESPAWN;
+			} else {
+				percentageMessage = plugin.getFiles().PERCENTAGE_MESSAGE_ON_RESPAWN;
+			}
+
+		} else if (checkFirst.equalsIgnoreCase("delete")) {
+
+			if (plugin.getFiles().doPerStackCheck(player)) {
+				percentageMessage = plugin.getFiles().INVERTED_PER_STACK_CHECK_MESSAGE_ON_RESPAWN;
+			} else {
+				percentageMessage = plugin.getFiles().INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN;
+			}
+
+		} else {
+
+			if (plugin.getFiles().doPerStackCheck(player)) {
+				percentageMessage = plugin.getFiles().PER_STACK_CHECK_MESSAGE_ON_RESPAWN;
+			} else {
+				percentageMessage = plugin.getFiles().PERCENTAGE_MESSAGE_ON_RESPAWN;
+			}
+
+		}
+
+		percentageMessage = percentageMessage.replace("{0}",
+				plugin.getFiles().getRetainPercentage(player) + "%").replace(
+				"{1}", plugin.getFiles().getDeletePercentage(player) + "%");
+
+		player.sendMessage(ChatColor.RED + percentageMessage);
 	}
 }

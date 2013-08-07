@@ -36,8 +36,12 @@ public class InventoryDropChance extends JavaPlugin {
 			System.out
 					.print("[Inventory Drop Chance] WGCustomFlags has not been found. Custom flags cannot be used!");
 		}
-		if (wgClass.checkWorldGuard() && wgClass.checkWGCustomFlags()) {
+		
+		if (wgClass.isWorldGuardReady()) {
+			
+			// Get WorldGuardHandler
 			wgClass.initialiseWGHandler(this);
+			
 			System.out
 					.print("[Inventory Drop Chance] Hooked into WorldGuard and WGCustomFlags!");
 			System.out

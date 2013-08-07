@@ -43,7 +43,8 @@ public class IDCListeners implements Listener {
 
 		Player player = event.getEntity().getPlayer();
 
-		if (!plugin.getWorldHandlers().worldIsEnabled(player.getWorld().getName()))
+		if (!plugin.getWorldHandlers().worldIsEnabled(
+				player.getWorld().getName()))
 			return;
 
 		count.put(player.getName(), player.getInventory().getContents().length);
@@ -77,9 +78,32 @@ public class IDCListeners implements Listener {
 			return;
 		}
 
-		String checkFirst = plugin.getConfig().getString(
-				"Groups." + plugin.getFiles().getGroup(player) + ".check first",
-				"save");
+		if (plugin.getFiles().doPerStackCheck(player)) {
+			// Do per stack check
+
+			List<ItemStack> drops = event.getDrops();
+
+			List<ItemStack> givenItems = plugin.getMethods().doPerStackCheck(
+					player, drops);
+			
+			List<ItemStack> droppedItems = plugin.getMethods().getDroppedItems(
+					player, drops);
+
+			// Save given items
+			items.put(player.getName(), givenItems);
+
+			// Clear drops
+			drops.clear();
+
+			// Add drops
+			for (ItemStack droppedItem : droppedItems) {
+				drops.add(droppedItem);
+			}
+
+			return;
+		}
+
+		String checkFirst = plugin.getFiles().getCheckFirst(player);
 
 		if (checkFirst.equalsIgnoreCase("save")) {
 
@@ -90,8 +114,8 @@ public class IDCListeners implements Listener {
 			// Run delete check afterwards
 			// Remove deleted items from items so they are not given back
 			List<ItemStack> givenItems = items.get(player.getName());
-			List<ItemStack> deletedItems = plugin.getMethods().doDeleteCheck(player,
-					givenItems);
+			List<ItemStack> deletedItems = plugin.getMethods().doDeleteCheck(
+					player, givenItems);
 
 			// Remove all deleted items from the given items
 			for (ItemStack deletedItem : deletedItems) {
@@ -118,8 +142,8 @@ public class IDCListeners implements Listener {
 		} else if (checkFirst.equalsIgnoreCase("delete")) {
 
 			// Run delete check first
-			List<ItemStack> deletedItems = plugin.getMethods().doDeleteCheck(player,
-					event.getDrops());
+			List<ItemStack> deletedItems = plugin.getMethods().doDeleteCheck(
+					player, event.getDrops());
 
 			// Remove deleted items from dropped items
 			event.getDrops().removeAll(deletedItems);
@@ -127,11 +151,6 @@ public class IDCListeners implements Listener {
 			// Run save check afterwards
 			items.put(player.getName(),
 					plugin.getMethods().doSaveCheck(player, event.getDrops()));
-		} else if (checkFirst.equalsIgnoreCase("both")) {
-			// Do a per-stack check
-			
-			
-			
 		}
 	}
 
@@ -141,7 +160,8 @@ public class IDCListeners implements Listener {
 		final Player player = event.getPlayer();
 		final String playerName = player.getName();
 
-		if (!plugin.getWorldHandlers().worldIsEnabled(player.getWorld().getName()))
+		if (!plugin.getWorldHandlers().worldIsEnabled(
+				player.getWorld().getName()))
 			return;
 
 		// Give player saved EXP

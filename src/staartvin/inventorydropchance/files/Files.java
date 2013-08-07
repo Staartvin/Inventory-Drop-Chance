@@ -25,7 +25,9 @@ public class Files {
 	public String INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN = "";
 	public String ITEMS_MESSAGE_ON_RESPAWN = "";
 	public String ALL_ITEMS_SURVIVED = "";
-	
+	public String PER_STACK_CHECK_MESSAGE_ON_RESPAWN = "";
+	public String INVERTED_PER_STACK_CHECK_MESSAGE_ON_RESPAWN = "";
+
 	private FileConfiguration config;
 	private FileConfiguration languageConfig;
 	private File languageConfigFile;
@@ -62,10 +64,8 @@ public class Files {
 		try {
 			getLanguageConfig().save(languageConfigFile);
 		} catch (IOException ex) {
-			plugin.getLogger()
-					.log(Level.SEVERE,
-							"Could not save config to "
-									+ languageConfigFile, ex);
+			plugin.getLogger().log(Level.SEVERE,
+					"Could not save config to " + languageConfigFile, ex);
 		}
 	}
 
@@ -76,8 +76,11 @@ public class Files {
 				.getString("INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN");
 		ITEMS_MESSAGE_ON_RESPAWN = languageConfig
 				.getString("ITEMS_MESSAGE_ON_RESPAWN");
-		ALL_ITEMS_SURVIVED = languageConfig
-				.getString("ALL_ITEMS_SURVIVED");
+		ALL_ITEMS_SURVIVED = languageConfig.getString("ALL_ITEMS_SURVIVED");
+		PER_STACK_CHECK_MESSAGE_ON_RESPAWN = languageConfig
+				.getString("PER_STACK_CHECK_MESSAGE_ON_RESPAWN");
+		INVERTED_PER_STACK_CHECK_MESSAGE_ON_RESPAWN = languageConfig
+				.getString("INVERTED_PER_STACK_CHECK_MESSAGE_ON_RESPAWN");
 	}
 
 	public void loadConfiguration() {
@@ -94,7 +97,17 @@ public class Files {
 						+ "\nXp loss is the percentage of the xp that will be lost. The rest will be given back to you when you respawn"
 						+ "\nCheck first is the first thing to check:"
 						+ "\n    'save' = First the save check will be run, then the delete check. This way the delete check will only check from the saved items"
-						+ "\n    'delete' = First the delete check will be run, then the save check. This way the save check will only check the not-deleted items");
+						+ "\n    'delete' = First the delete check will be run, then the save check. This way the save check will only check the not-deleted items"
+						+ "\nWhen 'per-stack-check' is true, IDC will check every stack and will keep a % of it and delete a % of that. (Follows check-first rules)"
+						+ "\n	When you have a stack of 64 diamonds and your retain and delete percentage is 50%, IDC will calculate: "
+						+ "\n		stack amount * (retain percentage / 100) = kept amount. (Amount a player keeps)"
+						+ "\n		kept amount * (delete percentage / 100) = delete amount. (Amount of the kept amount that will be deleted)"
+						+ "\n		stack amount - kept amount = drop amount. (Amount that is dropped on the ground)"
+						+ "\n	In the example: "
+						+ "\n		kept amount = 64 * (50 / 100) = 32"
+						+ "\n		delete amount = 32 * (50 / 100) = 16"
+						+ "\n		drop amount = 64 - 32 = 32"
+						+ "\n	A player will keep 16 diamonds after his death. 32 will be dropped at his death location.");
 
 		config.addDefault("verboseLogging", true);
 		config.addDefault(
@@ -106,7 +119,8 @@ public class Files {
 		config.addDefault("Groups.ExampleGroup.xp loss", 25);
 		config.addDefault("Groups.ExampleGroup.use xp loss", false);
 		config.addDefault("Groups.ExampleGroup.check first", "save");
-		
+		config.addDefault("Groups.ExampleGroup.per-stack-check", false);
+
 		config.addDefault("Updater.doCheckUpdate", true);
 
 		if (config.getStringList("Groups.ExampleGroup.blacklist").isEmpty()) {
@@ -121,14 +135,18 @@ public class Files {
 
 		getLanguageConfig().addDefault("ITEMS_MESSAGE_ON_RESPAWN",
 				"{0} items have survived your death!");
-				getLanguageConfig()
+		getLanguageConfig()
 				.addDefault("PERCENTAGE_MESSAGE_ON_RESPAWN",
 						"{0} of your old inventory has been saved and {1} of that has been deleted.");
-				getLanguageConfig()
+		getLanguageConfig()
 				.addDefault("INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN",
 						"{1} of your old inventory has been deleted and {0} of that has been saved.");
 		getLanguageConfig().addDefault("ALL_ITEMS_SURVIVED",
 				"All your items survived your death!");
+		getLanguageConfig().addDefault("PER_STACK_CHECK_MESSAGE_ON_RESPAWN",
+				"{0} of each stack of your old inventory has been saved and {1} of that has been deleted.");
+		getLanguageConfig().addDefault("INVERTED_PER_STACK_CHECK_MESSAGE_ON_RESPAWN",
+				"{1} of each stack of your old inventory has been deleted and {0 of that has been saved.");
 
 		loadConfigVariables();
 
@@ -145,34 +163,44 @@ public class Files {
 		if (group == null)
 			return false;
 		else
-			return config.getBoolean(
-					"Groups." + group + ".use xp loss");
+			return config.getBoolean("Groups." + group + ".use xp loss");
 	}
 
 	public int getRetainPercentage(Player player) {
 
-		String group = getGroup(player);
-
-		if (group == null)
-			return 50;
-		else
-			return config.getInt(
+		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
+			return plugin.getWorldGuardClass().wgHandler
+					.getRetainPercentage(player);
+		}
+		
+		else {
+			String group = plugin.getFiles().getGroup(player);
+			
+			if (group == null) return 50;
+			else return plugin.getConfig().getInt(
 					"Groups." + group + ".retain percentage");
+		}
 	}
 
 	public int getDeletePercentage(Player player) {
 
-		String group = getGroup(player);
-
-		if (group == null)
-			return 50;
-		else
-			return config.getInt(
+		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
+			return plugin.getWorldGuardClass().wgHandler
+					.getDeletePercentage(player);
+		}
+		
+		else {
+			String group = plugin.getFiles().getGroup(player);
+			
+			if (group == null) return 50;
+			else return plugin.getConfig().getInt(
 					"Groups." + group + ".delete percentage");
+		}
 	}
 
 	public String getGroup(Player player) {
-		for (String groupName : plugin.getConfig().getConfigurationSection("Groups").getKeys(false)) {
+		for (String groupName : plugin.getConfig()
+				.getConfigurationSection("Groups").getKeys(false)) {
 			if (player.hasPermission("idc.group." + groupName)) {
 				return groupName;
 			}
@@ -181,59 +209,94 @@ public class Files {
 	}
 
 	public int getExpPercentage(Player player) {
-		String group = getGroup(player);
 
-		if (group == null)
-			return 50;
-		else
-			return config.getInt("Groups." + group + ".xp loss");
+		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
+			return plugin.getWorldGuardClass().wgHandler
+					.getExpPercentage(player);
+		}
+		
+		else {
+			String group = plugin.getFiles().getGroup(player);
+			
+			if (group == null) return 50;
+			else return plugin.getConfig().getInt(
+					"Groups." + group + ".xp loss");
+		}
 	}
-	
+
 	public boolean logVerbose() {
 		return config.getBoolean("verboseLogging");
 	}
 
 	public boolean hasAllOptions() {
-		Set<String> groupSet = config.getConfigurationSection("Groups").getKeys(false);
+		Set<String> groupSet = config.getConfigurationSection("Groups")
+				.getKeys(false);
 		boolean allIsRight = true;
-		
+
 		// Check every single option
-		for (String group: groupSet) {
-			if(config.getInt("Groups." + group + ".retain percentage", -1) == -1) {
-				plugin.getLogger().warning("Retain Percentage for group '" + group + "' is not found!");
+		for (String group : groupSet) {
+			if (config.getInt("Groups." + group + ".retain percentage", -1) == -1) {
+				plugin.getLogger().warning(
+						"Retain Percentage for group '" + group
+								+ "' is not found!");
 				allIsRight = false;
 			}
-			
-			if(config.getInt("Groups." + group + ".delete percentage", -1) == -1) {
-				plugin.getLogger().warning("Delete Percentage for group '" + group + "' is not found!");
+
+			if (config.getInt("Groups." + group + ".delete percentage", -1) == -1) {
+				plugin.getLogger().warning(
+						"Delete Percentage for group '" + group
+								+ "' is not found!");
 				allIsRight = false;
 			}
-			
-			if(config.getInt("Groups." + group + ".xp loss", -1) == -1) {
-				plugin.getLogger().warning("XP Loss for group '" + group + "' is not found!");
+
+			if (config.getInt("Groups." + group + ".xp loss", -1) == -1) {
+				plugin.getLogger().warning(
+						"XP Loss for group '" + group + "' is not found!");
 				allIsRight = false;
 			}
-			
-			if(config.getString("Groups." + group + ".check first", null) == null) {
-				plugin.getLogger().warning("Check first for group '" + group + "' is not found!");
+
+			if (config.getString("Groups." + group + ".check first", null) == null) {
+				plugin.getLogger().warning(
+						"Check first for group '" + group + "' is not found!");
 				allIsRight = false;
 			}
-			
-			if(config.getList("Groups." + group + ".blacklist") == null) {
-				plugin.getLogger().warning("Blacklist for group '" + group + "' is not found!");
+
+			if (config.getList("Groups." + group + ".blacklist") == null) {
+				plugin.getLogger().warning(
+						"Blacklist for group '" + group + "' is not found!");
 				allIsRight = false;
 			}
-			
-			if(config.getList("Groups." + group + ".whitelist") == null) {
-				plugin.getLogger().warning("Whitelist for group '" + group + "' is not found!");
+
+			if (config.getList("Groups." + group + ".whitelist") == null) {
+				plugin.getLogger().warning(
+						"Whitelist for group '" + group + "' is not found!");
 				allIsRight = false;
 			}
 		}
-		
+
 		return allIsRight;
 	}
-	
+
 	public boolean doCheckUpdate() {
 		return config.getBoolean("Updater.doCheckUpdate");
 	}
-} 
+
+	public boolean doPerStackCheck(Player player) {
+		String group = getGroup(player);
+
+		if (group == null)
+			return false;
+
+		return config.getBoolean("Groups." + group + ".per-stack-check");
+	}
+
+	public String getCheckFirst(Player player) {
+
+		String group = getGroup(player);
+
+		if (group == null)
+			return "save";
+
+		return config.getString("Groups." + group + ".check first");
+	}
+}

@@ -4,7 +4,6 @@ import org.bukkit.entity.Player;
 
 import staartvin.inventorydropchance.InventoryDropChance;
 
-
 import com.mewin.WGCustomFlags.WGCustomFlagsPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
 import com.sk89q.worldguard.protection.ApplicableRegionSet;
@@ -53,14 +52,13 @@ public class WorldGuardHandler {
 				}
 			}
 		}
+		String group = plugin.getFiles().getGroup(player);
 
-		for (String groupName : plugin.getConfig().getConfigurationSection("Groups").getKeys(false)) {
-			if (player.hasPermission("idc.group." + groupName)) {
-				return plugin.getConfig().getInt(
-						"Groups." + groupName + ".retain percentage");
-			}
-		}
-		return 50;
+		if (group == null)
+			return 50;
+		else
+			return plugin.getConfig().getInt(
+					"Groups." + group + ".retain percentage");
 	}
 
 	public int getDeletePercentage(Player player) {
@@ -78,14 +76,13 @@ public class WorldGuardHandler {
 				}
 			}
 		}
+		String group = plugin.getFiles().getGroup(player);
 
-		for (String groupName : plugin.getConfig().getConfigurationSection("Groups").getKeys(false)) {
-			if (player.hasPermission("idc.group." + groupName)) {
-				return plugin.getConfig().getInt(
-						"Groups." + groupName + ".lose percentage");
-			}
-		}
-		return 50;
+		if (group == null)
+			return 50;
+		else
+			return plugin.getConfig().getInt(
+					"Groups." + group + ".delete percentage");
 	}
 
 	public int getExpPercentage(Player player) {
@@ -103,15 +100,14 @@ public class WorldGuardHandler {
 				}
 			}
 		}
+		String group = plugin.getFiles().getGroup(player);
 
-		for (String groupName : plugin.getConfig().getConfigurationSection("Groups").getKeys(false)) {
-			if (player.hasPermission("idc.group." + groupName)) {
-				return plugin.getConfig().getInt(
-						"Groups." + groupName + ".xp loss");
-			}
-		}
-		return 50;
-	}
+		if (group == null)
+			return 50;
+		else
+			return plugin.getConfig().getInt(
+					"Groups." + group + ".xp loss");
+	} 
 
 	public WorldGuardPlugin getWorldGuard() {
 		wgPlugin = (WorldGuardPlugin) plugin.getServer().getPluginManager()

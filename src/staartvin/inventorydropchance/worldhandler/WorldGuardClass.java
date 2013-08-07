@@ -9,21 +9,14 @@ public class WorldGuardClass {
 	
 	public WorldGuardClass(InventoryDropChance instance) {
 		plugin = instance;
-		
 	}
 	
 	public boolean checkWorldGuard() {
-		if (plugin.getServer().getPluginManager().getPlugin("WorldGuard") != null) {
-			return true;
-		}
-		return false;
+		return plugin.getServer().getPluginManager().getPlugin("WorldGuard") != null;
 	}
 	
 	public boolean checkWGCustomFlags() {
-		if (plugin.getServer().getPluginManager().getPlugin("WGCustomFlags") != null) {
-			return true;
-		}
-		return false;
+		return plugin.getServer().getPluginManager().getPlugin("WGCustomFlags") != null;
 	}
 	
 	public void initialiseWGHandler(InventoryDropChance instance) {
@@ -31,9 +24,6 @@ public class WorldGuardClass {
 	}
 	
 	public boolean isWorldGuardReady() {
-		if (checkWorldGuard() && checkWGCustomFlags()) {
-			return true;
-		}
-		return false;
+		return checkWorldGuard() && checkWGCustomFlags(); 
 	}
 }

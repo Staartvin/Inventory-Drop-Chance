@@ -16,15 +16,10 @@ public class ExpHandler {
 	public int calculateExp(int Exp, Player player) {
 		// Calculate amount of xp not being lost
 		int expLoss;
-		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
-			expLoss = (int) Math
-					.round(Exp
-							* (plugin.getWorldGuardClass().wgHandler
-									.getExpPercentage(player) / 100d));
-		} else {
-			expLoss = (int) Math.round(Exp
+
+		expLoss = (int) Math.round(Exp
 					* (plugin.getFiles().getExpPercentage(player) / 100d));
-		}
+
 		return Exp - expLoss;
 	}
 	
