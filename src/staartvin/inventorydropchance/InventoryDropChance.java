@@ -1,31 +1,32 @@
-package Staartvin.InventoryDropChance;
+package staartvin.inventorydropchance;
 
-import java.io.File;
-import java.util.ArrayList;
 import java.util.List;
 
-import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import Staartvin.InventoryDropChance.updater.Updater;
+import staartvin.inventorydropchance.experience.ExpHandler;
+import staartvin.inventorydropchance.files.Files;
+import staartvin.inventorydropchance.listed.ListHandler;
+import staartvin.inventorydropchance.listeners.IDCListeners;
+import staartvin.inventorydropchance.updater.Updater;
+import staartvin.inventorydropchance.worldhandler.WorldGuardClass;
+import staartvin.inventorydropchance.worldhandler.WorldHandlers;
+
 
 public class InventoryDropChance extends JavaPlugin {
 
-	IDCEvents events = new IDCEvents(this);
-	Files files = new Files(this);
-	boolean verboseLogging;
-	protected FileConfiguration languageConfig;
-	protected File languageConfigFile;
-	List<String> groups = new ArrayList<String>();
-	WorldGuardClass wgClass = new WorldGuardClass(this);
-	WorldHandlers wHandlers = new WorldHandlers(this);
-	public Methods methods = new Methods(this);
+	private IDCListeners events = new IDCListeners(this);
+	private Files files = new Files(this);
+	private WorldGuardClass wgClass = new WorldGuardClass(this);
+	private WorldHandlers wHandlers = new WorldHandlers(this);
+	private Methods methods = new Methods(this);
 	public Updater updater;
+	private ListHandler listHandler = new ListHandler(this);
+	private ExpHandler expHandler = new ExpHandler(this);
 
 	public void onEnable() {
-		getServer().getPluginManager().registerEvents(events, this);
+		getServer().getPluginManager().registerEvents(getEvents(), this);
 		files.loadConfiguration();
-		checkGroups();
 
 		if (!wgClass.checkWorldGuard()) {
 			System.out
@@ -81,31 +82,11 @@ public class InventoryDropChance extends JavaPlugin {
 				+ "] has been disabled!");
 	}
 
-	protected boolean checkGroups() {
-		groups.addAll(getConfig().getConfigurationSection("Groups").getKeys(
-				false));
-
-		if (verboseLogging) {
-			if (groups == null) {
-				System.out
-						.print("[Inventory Drop Chance] Group list is not found!");
-				System.out
-						.print("[Inventory Drop Chance] Disabling IDC because group list is not found!");
-				onDisable();
-				return false;
-			}
-			for (String group : groups) {
-				System.out.print("[Inventory Drop Chance] Group: " + group);
-			}
-		}
-		return true;
-	}
-
-	protected List<String> getWhitelistedItems(String group) {
+	public List<String> getWhitelistedItems(String group) {
 		return getConfig().getStringList("Groups." + group + ".whitelist");
 	}
 
-	protected List<String> getBlacklistedItems(String group) {
+	public List<String> getBlacklistedItems(String group) {
 		return getConfig().getStringList("Groups." + group + ".blacklist");
 	}
 	
@@ -113,5 +94,33 @@ public class InventoryDropChance extends JavaPlugin {
 		if (!getConfig().getBoolean("Updater.doCheckUpdate")) return;
 		updater = new Updater(this, "inventory-drop-chance", this.getFile(),
 				Updater.UpdateType.NO_DOWNLOAD, false);
+	}
+
+	public Methods getMethods() {
+		return methods;
+	}
+	
+	public WorldHandlers getWorldHandlers() {
+		return wHandlers;
+	}
+	
+	public WorldGuardClass getWorldGuardClass() {
+		return wgClass;
+	}
+	
+	public Files getFiles() {
+		return files;
+	}
+
+	public IDCListeners getEvents() {
+		return events;
+	}
+	
+	public ListHandler getListHandler() {
+		return listHandler;
+	}
+	
+	public ExpHandler getExpHandler() {
+		return expHandler;
 	}
 }

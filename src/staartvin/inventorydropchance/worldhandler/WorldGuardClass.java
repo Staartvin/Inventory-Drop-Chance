@@ -1,34 +1,36 @@
-package Staartvin.InventoryDropChance;
+package staartvin.inventorydropchance.worldhandler;
+
+import staartvin.inventorydropchance.InventoryDropChance;
 
 public class WorldGuardClass {
 
 	private InventoryDropChance plugin;
-	protected WorldGuardHandler wgHandler;
+	public WorldGuardHandler wgHandler;
 	
 	public WorldGuardClass(InventoryDropChance instance) {
 		plugin = instance;
 		
 	}
 	
-	protected boolean checkWorldGuard() {
+	public boolean checkWorldGuard() {
 		if (plugin.getServer().getPluginManager().getPlugin("WorldGuard") != null) {
 			return true;
 		}
 		return false;
 	}
 	
-	protected boolean checkWGCustomFlags() {
+	public boolean checkWGCustomFlags() {
 		if (plugin.getServer().getPluginManager().getPlugin("WGCustomFlags") != null) {
 			return true;
 		}
 		return false;
 	}
 	
-	protected void initialiseWGHandler(InventoryDropChance instance) {
+	public void initialiseWGHandler(InventoryDropChance instance) {
 		wgHandler = new WorldGuardHandler(instance);
 	}
 	
-	protected boolean isWorldGuardReady() {
+	public boolean isWorldGuardReady() {
 		if (checkWorldGuard() && checkWGCustomFlags()) {
 			return true;
 		}

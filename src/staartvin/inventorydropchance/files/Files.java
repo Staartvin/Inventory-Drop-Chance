@@ -1,4 +1,4 @@
-package Staartvin.InventoryDropChance;
+package staartvin.inventorydropchance.files;
 
 import java.io.File;
 import java.io.IOException;
@@ -10,6 +10,8 @@ import java.util.logging.Level;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
+
+import staartvin.inventorydropchance.InventoryDropChance;
 
 public class Files {
 
@@ -23,59 +25,62 @@ public class Files {
 	public String INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN = "";
 	public String ITEMS_MESSAGE_ON_RESPAWN = "";
 	public String ALL_ITEMS_SURVIVED = "";
-	public FileConfiguration config;
+	
+	private FileConfiguration config;
+	private FileConfiguration languageConfig;
+	private File languageConfigFile;
 
 	// Player Config Methods
-	protected void reloadLanguageConfig() {
-		if (plugin.languageConfigFile == null) {
-			plugin.languageConfigFile = new File(plugin.getDataFolder(),
+	public void reloadLanguageConfig() {
+		if (languageConfigFile == null) {
+			languageConfigFile = new File(plugin.getDataFolder(),
 					"language.yml");
 		}
-		plugin.languageConfig = YamlConfiguration
-				.loadConfiguration(plugin.languageConfigFile);
+		languageConfig = YamlConfiguration
+				.loadConfiguration(languageConfigFile);
 
 		// Look for defaults in the jar
 		InputStream defConfigStream = plugin.getResource("language.yml");
 		if (defConfigStream != null) {
 			YamlConfiguration defConfig = YamlConfiguration
 					.loadConfiguration(defConfigStream);
-			plugin.languageConfig.setDefaults(defConfig);
+			languageConfig.setDefaults(defConfig);
 		}
 	}
 
-	protected FileConfiguration getLanguageConfig() {
-		if (plugin.languageConfig == null) {
+	public FileConfiguration getLanguageConfig() {
+		if (languageConfig == null) {
 			this.reloadLanguageConfig();
 		}
-		return plugin.languageConfig;
+		return languageConfig;
 	}
 
-	protected void saveLanguageConfig() {
-		if (plugin.languageConfig == null || plugin.languageConfigFile == null) {
+	public void saveLanguageConfig() {
+		if (languageConfig == null || languageConfigFile == null) {
 			return;
 		}
 		try {
-			getLanguageConfig().save(plugin.languageConfigFile);
+			getLanguageConfig().save(languageConfigFile);
 		} catch (IOException ex) {
 			plugin.getLogger()
 					.log(Level.SEVERE,
 							"Could not save config to "
-									+ plugin.languageConfigFile, ex);
+									+ languageConfigFile, ex);
 		}
 	}
 
-	protected void loadConfigVariables() {
-		PERCENTAGE_MESSAGE_ON_RESPAWN = plugin.languageConfig
+	public void loadConfigVariables() {
+		PERCENTAGE_MESSAGE_ON_RESPAWN = languageConfig
 				.getString("PERCENTAGE_MESSAGE_ON_RESPAWN");
-		INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN = plugin.languageConfig
+		INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN = languageConfig
 				.getString("INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN");
-		ITEMS_MESSAGE_ON_RESPAWN = plugin.languageConfig
+		ITEMS_MESSAGE_ON_RESPAWN = languageConfig
 				.getString("ITEMS_MESSAGE_ON_RESPAWN");
-		ALL_ITEMS_SURVIVED = plugin.languageConfig
+		ALL_ITEMS_SURVIVED = languageConfig
 				.getString("ALL_ITEMS_SURVIVED");
 	}
 
-	protected void loadConfiguration() {
+	public void loadConfiguration() {
 		config = plugin.getConfig();
 
 		config.options()
@@ -114,30 +119,26 @@ public class Files {
 					Arrays.asList(new String[] { "276", "25" }));
 		}
 
-		plugin.files.getLanguageConfig().addDefault("ITEMS_MESSAGE_ON_RESPAWN",
+		getLanguageConfig().addDefault("ITEMS_MESSAGE_ON_RESPAWN",
 				"{0} items have survived your death!");
-		plugin.files
-				.getLanguageConfig()
+				getLanguageConfig()
 				.addDefault("PERCENTAGE_MESSAGE_ON_RESPAWN",
 						"{0} of your old inventory has been saved and {1} of that has been deleted.");
-		plugin.files
-				.getLanguageConfig()
+				getLanguageConfig()
 				.addDefault("INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN",
 						"{1} of your old inventory has been deleted and {0} of that has been saved.");
-		plugin.files.getLanguageConfig().addDefault("ALL_ITEMS_SURVIVED",
+		getLanguageConfig().addDefault("ALL_ITEMS_SURVIVED",
 				"All your items survived your death!");
 
-		plugin.files.loadConfigVariables();
+		loadConfigVariables();
 
 		config.options().copyDefaults(true);
 		plugin.saveConfig();
-		plugin.files.getLanguageConfig().options().copyDefaults(true);
-		plugin.files.saveLanguageConfig();
-
-		plugin.verboseLogging = config.getBoolean("verboseLogging");
+		getLanguageConfig().options().copyDefaults(true);
+		saveLanguageConfig();
 	}
 
-	protected boolean getExpLossUsage(Player player) {
+	public boolean getExpLossUsage(Player player) {
 
 		String group = getGroup(player);
 
@@ -148,7 +149,7 @@ public class Files {
 					"Groups." + group + ".use xp loss");
 	}
 
-	protected int getRetainPercentage(Player player) {
+	public int getRetainPercentage(Player player) {
 
 		String group = getGroup(player);
 
@@ -159,7 +160,7 @@ public class Files {
 					"Groups." + group + ".retain percentage");
 	}
 
-	protected int getDeletePercentage(Player player) {
+	public int getDeletePercentage(Player player) {
 
 		String group = getGroup(player);
 
@@ -170,8 +171,8 @@ public class Files {
 					"Groups." + group + ".delete percentage");
 	}
 
-	protected String getGroup(Player player) {
-		for (String groupName : plugin.groups) {
+	public String getGroup(Player player) {
+		for (String groupName : plugin.getConfig().getConfigurationSection("Groups").getKeys(false)) {
 			if (player.hasPermission("idc.group." + groupName)) {
 				return groupName;
 			}
@@ -179,13 +180,17 @@ public class Files {
 		return null;
 	}
 
-	protected int getExpPercentage(Player player) {
+	public int getExpPercentage(Player player) {
 		String group = getGroup(player);
 
 		if (group == null)
 			return 50;
 		else
 			return config.getInt("Groups." + group + ".xp loss");
+	}
+	
+	public boolean logVerbose() {
+		return config.getBoolean("verboseLogging");
 	}
 
 	public boolean hasAllOptions() {

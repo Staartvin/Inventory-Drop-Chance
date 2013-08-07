@@ -1,23 +1,21 @@
-package Staartvin.InventoryDropChance;
+package staartvin.inventorydropchance.listeners;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
-import org.bukkit.event.player.PlayerJoinEvent;
-import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.inventory.ItemStack;
 
-//import Staartvin.InventoryDropChance.experience.ExperienceManager;
-import Staartvin.InventoryDropChance.updater.Updater;
+import staartvin.inventorydropchance.InventoryDropChance;
 
-public class IDCEvents implements Listener {
+//import staartvin.inventorydropchance.experience.ExperienceManager;
+
+public class IDCListeners implements Listener {
 
 	InventoryDropChance plugin;
 
@@ -28,15 +26,15 @@ public class IDCEvents implements Listener {
 	protected HashMap<String, List<ItemStack>> items = new HashMap<String, List<ItemStack>>();
 
 	// Is the player dead or not?
-	protected HashMap<String, Boolean> dead = new HashMap<String, Boolean>();
+	//protected HashMap<String, Boolean> dead = new HashMap<String, Boolean>();
 
 	// The amount of EXP to give back on respawn
-	protected HashMap<String, Integer> ExpToKeep = new HashMap<String, Integer>();
-	
+	public HashMap<String, Integer> ExpToKeep = new HashMap<String, Integer>();
+
 	// A hashmap containing all ExperienceManager objects
 	//protected HashMap<String, ExperienceManager> expManHandler = new HashMap<String, ExperienceManager>();
 
-	public IDCEvents(InventoryDropChance plugin) {
+	public IDCListeners(InventoryDropChance plugin) {
 		this.plugin = plugin;
 	}
 
@@ -45,15 +43,13 @@ public class IDCEvents implements Listener {
 
 		Player player = event.getEntity().getPlayer();
 
-		dead.put(player.getName(), true);
-
-		if (!plugin.wHandlers.worldIsEnabled(player.getWorld().getName()))
+		if (!plugin.getWorldHandlers().worldIsEnabled(player.getWorld().getName()))
 			return;
 
 		count.put(player.getName(), player.getInventory().getContents().length);
 
 		// Run EXP check
-		plugin.methods.doEXPCheck(player, event);
+		plugin.getExpHandler().doEXPCheck(player, event);
 
 		if (player.hasPermission("idc.keepallitems")) {
 			List<ItemStack> itemStackArray = new ArrayList<ItemStack>();
@@ -76,30 +72,30 @@ public class IDCEvents implements Listener {
 
 			// Save items and armour for other methods
 			items.put(player.getName(), itemStackArray);
-			plugin.methods.armour.put(player.getName(), armourStackArray);
+			plugin.getMethods().armour.put(player.getName(), armourStackArray);
 
 			return;
 		}
 
 		String checkFirst = plugin.getConfig().getString(
-				"Groups." + plugin.files.getGroup(player) + ".check first",
+				"Groups." + plugin.getFiles().getGroup(player) + ".check first",
 				"save");
 
 		if (checkFirst.equalsIgnoreCase("save")) {
 
 			// Run save check first
 			items.put(player.getName(),
-					plugin.methods.doSaveCheck(player, event.getDrops()));
+					plugin.getMethods().doSaveCheck(player, event.getDrops()));
 
 			// Run delete check afterwards
 			// Remove deleted items from items so they are not given back
 			List<ItemStack> givenItems = items.get(player.getName());
-			List<ItemStack> deletedItems = plugin.methods.doDeleteCheck(player,
+			List<ItemStack> deletedItems = plugin.getMethods().doDeleteCheck(player,
 					givenItems);
 
 			// Remove all deleted items from the given items
-			for (ItemStack deletedItem: deletedItems) {
-				for (ItemStack givenItem: givenItems) {
+			for (ItemStack deletedItem : deletedItems) {
+				for (ItemStack givenItem : givenItems) {
 					if (givenItem.isSimilar(deletedItem)) {
 						givenItems.remove(givenItem);
 						break;
@@ -122,7 +118,7 @@ public class IDCEvents implements Listener {
 		} else if (checkFirst.equalsIgnoreCase("delete")) {
 
 			// Run delete check first
-			List<ItemStack> deletedItems = plugin.methods.doDeleteCheck(player,
+			List<ItemStack> deletedItems = plugin.getMethods().doDeleteCheck(player,
 					event.getDrops());
 
 			// Remove deleted items from dropped items
@@ -130,7 +126,12 @@ public class IDCEvents implements Listener {
 
 			// Run save check afterwards
 			items.put(player.getName(),
-					plugin.methods.doSaveCheck(player, event.getDrops()));
+					plugin.getMethods().doSaveCheck(player, event.getDrops()));
+		} else if (checkFirst.equalsIgnoreCase("both")) {
+			// Do a per-stack check
+			
+			
+			
 		}
 	}
 
@@ -140,24 +141,16 @@ public class IDCEvents implements Listener {
 		final Player player = event.getPlayer();
 		final String playerName = player.getName();
 
-		if (dead.get(playerName) == null) {
-			dead.put(playerName, false);
-		}
-		if (!dead.get(playerName))
-			return;
-
-		dead.put(playerName, false);
-
-		if (!plugin.wHandlers.worldIsEnabled(player.getWorld().getName()))
+		if (!plugin.getWorldHandlers().worldIsEnabled(player.getWorld().getName()))
 			return;
 
 		// Give player saved EXP
-		if (plugin.files.getExpLossUsage(player)) {
+		if (plugin.getFiles().getExpLossUsage(player)) {
 			if (!player.hasPermission("idc.keepxp")) {
 				if (ExpToKeep.get(playerName) == null)
 					return;
 
-		plugin.getServer().getScheduler()
+				plugin.getServer().getScheduler()
 						.runTaskLater(plugin, new Runnable() {
 
 							public void run() {
@@ -168,54 +161,13 @@ public class IDCEvents implements Listener {
 			}
 		}
 
-		plugin.methods.returnItems(player, items.get(playerName));
+		plugin.getMethods().returnItems(player, items.get(playerName));
 
 		// Set everything to null so GC can do his work
 		count.put(playerName, null);
 		items.put(playerName, null);
-		plugin.methods.armour.put(playerName, null);
-		plugin.methods.whitelistedItems.put(playerName, null);
-		plugin.methods.randomUsed.put(playerName, null);
-	}
-
-	@EventHandler
-	protected void onServerQuit(PlayerQuitEvent event) {
-
-		Player player = event.getPlayer();
-		String playerName = player.getName();
-
-		if (dead.get(playerName) == null) {
-			dead.put(playerName, false);
-		}
-		if (!dead.get(playerName))
-			return;
-	}
-	
-	@EventHandler
-	protected void onServerJoin(PlayerJoinEvent event) {
-
-		final Player player = event.getPlayer();
-		
-/*		if (!expManHandler.containsKey(player.getName())) {
-			ExperienceManager expMan = new ExperienceManager(player);
-			
-			expManHandler.put(player.getName(), expMan);
-		} */
-		
-		plugin.getUpdaterStatus();
-		
-		if (player.hasPermission("idc.noticeonupdate")) {
-			if (plugin.updater != null && plugin.updater.getResult().equals(Updater.UpdateResult.UPDATE_AVAILABLE)) {
-				plugin.getServer().getScheduler().runTaskLaterAsynchronously(plugin, new Runnable() {
-
-					@Override
-					public void run() {
-						// TODO Auto-generated method stub
-						player.sendMessage(ChatColor.GREEN + plugin.updater.getLatestVersionString() + ChatColor.GOLD + " is now available for download!");
-					}
-					
-				}, 10L);
-			}
-		}
+		plugin.getMethods().armour.put(playerName, null);
+		plugin.getMethods().whitelistedItems.put(playerName, null);
+		plugin.getMethods().randomUsed.put(playerName, null);
 	}
 }

@@ -1,4 +1,4 @@
-package Staartvin.InventoryDropChance;
+package staartvin.inventorydropchance;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -6,30 +6,29 @@ import java.util.List;
 
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
-import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 
-//import Staartvin.InventoryDropChance.experience.ExperienceManager;
+//import staartvin.inventorydropchance.experience.ExperienceManager;
 
 public class Methods {
 	private InventoryDropChance plugin;
 
 	// Slots that are already used and can't be checked again
-	protected HashMap<String, List<Integer>> randomUsed = new HashMap<String, List<Integer>>();
+	public HashMap<String, List<Integer>> randomUsed = new HashMap<String, List<Integer>>();
 
 	// A list of items that are whitelisted from the inv and should be given back
-	protected HashMap<String, List<ItemStack>> whitelistedItems = new HashMap<String, List<ItemStack>>();
+	public HashMap<String, List<ItemStack>> whitelistedItems = new HashMap<String, List<ItemStack>>();
 
 	// Armour that will be given back on respawn
-	protected HashMap<String, List<ItemStack>> armour = new HashMap<String, List<ItemStack>>();
+	public HashMap<String, List<ItemStack>> armour = new HashMap<String, List<ItemStack>>();
 
 	public Methods(InventoryDropChance instance) {
 		plugin = instance;
 	}
 
 	// Get items that are saved
-	protected List<ItemStack> doSaveCheck(Player player,
+	public List<ItemStack> doSaveCheck(Player player,
 			List<ItemStack> itemsToCheck) {
 
 		String playerName = player.getName();
@@ -42,17 +41,17 @@ public class Methods {
 		List<ItemStack> whitelisted = new ArrayList<ItemStack>();
 
 		// Group of the player
-		String group = plugin.files.getGroup(player);
+		String group = plugin.getFiles().getGroup(player);
 
 		// Remove the blacklisted items from inventory so they are not counted
 		for (ItemStack item : player.getInventory()) {
 			if (group != null && item != null) {
-				if (isBlacklistedItem(item, group)) {
+				if (plugin.getListHandler().isBlacklistedItem(item, group)) {
 					blacklisted.add(item);
 					// We don't want to keep an item that is forced to be dropped.
 					drops.remove(item);
 					continue;
-				} else if (isWhitelistedItem(item, group)) {
+				} else if (plugin.getListHandler().isWhitelistedItem(item, group)) {
 					whitelisted.add(item);
 
 					// We don't want the same item given more than once, so we remove it from the drops
@@ -67,12 +66,12 @@ public class Methods {
 
 		// Calculate amount of items not being dropped
 		double calculated;
-		if (plugin.wgClass.isWorldGuardReady()) {
+		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
 			calculated = drops.size()
-					* (plugin.wgClass.wgHandler.getRetainPercentage(player) / 100d);
+					* (plugin.getWorldGuardClass().wgHandler.getRetainPercentage(player) / 100d);
 		} else {
 			calculated = drops.size()
-					* (plugin.files.getRetainPercentage(player) / 100d);
+					* (plugin.getFiles().getRetainPercentage(player) / 100d);
 		}
 		
 		// Initialize new ItemStack array
@@ -114,27 +113,7 @@ public class Methods {
 		return itemstackarray;
 	}
 
-	protected void doEXPCheck(Player player, PlayerDeathEvent event) {
-		if (player.hasPermission("idc.keepxp")) {
-			event.setDroppedExp(0);
-			event.setKeepLevel(true);
-			return;
-		}
-
-		if (plugin.files.getExpLossUsage(player)) {
-			//ExperienceManager expMan = plugin.events.expManHandler.get(player.getName());
-			
-			int calEXP = calculateExp(player.getTotalExperience(), player);
-
-			// Dropped exp = total exp of player - (total exp * xploss percentage)
-			event.setDroppedExp(player.getTotalExperience() - calEXP);
-
-			// Save the exp to give back
-			plugin.events.ExpToKeep.put(player.getName(), calEXP);
-		}
-	}
-
-	protected List<ItemStack> doDeleteCheck(Player player,
+	public List<ItemStack> doDeleteCheck(Player player,
 			List<ItemStack> itemsToCheck) {
 
 		String playerName = player.getName();
@@ -144,15 +123,15 @@ public class Methods {
 
 		// Calculate amount of items being deleted
 		double calculated;
-		if (plugin.wgClass.isWorldGuardReady()) {
+		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
 			calculated = itemsToCheck.size()
-					* (plugin.wgClass.wgHandler.getDeletePercentage(player) / 100d);
-			if (plugin.wgClass.wgHandler.getDeletePercentage(player) == 0)
+					* (plugin.getWorldGuardClass().wgHandler.getDeletePercentage(player) / 100d);
+			if (plugin.getWorldGuardClass().wgHandler.getDeletePercentage(player) == 0)
 				doCheck = false;
 		} else {
 			calculated = itemsToCheck.size()
-					* (plugin.files.getDeletePercentage(player) / 100d);
-			if (plugin.files.getDeletePercentage(player) == 0)
+					* (plugin.getFiles().getDeletePercentage(player) / 100d);
+			if (plugin.getFiles().getDeletePercentage(player) == 0)
 				doCheck = false;
 		}
 
@@ -180,91 +159,7 @@ public class Methods {
 		return deletedItems;
 	}
 
-	protected int calculateExp(int Exp, Player player) {
-		// Calculate amount of xp not being lost
-		int expLoss;
-		if (plugin.wgClass.isWorldGuardReady()) {
-			expLoss = (int) Math
-					.round(Exp
-							* (plugin.wgClass.wgHandler
-									.getExpPercentage(player) / 100d));
-		} else {
-			expLoss = (int) Math.round(Exp
-					* (plugin.files.getExpPercentage(player) / 100d));
-		}
-		return Exp - expLoss;
-	}
-
-	protected boolean isBlacklistedItem(ItemStack item, String group) {
-		List<String> blacklist = plugin.getBlacklistedItems(group);
-
-		int dataValue = item.getTypeId();
-		int damageValue = item.getData().getData();
-
-		for (String blacklistedItem : blacklist) {
-
-			Integer dataValueBlack = null;
-			Integer damageValueBlack = null;
-
-			if (blacklistedItem.contains(":")) {
-				// For items such as wool. 35:1
-				String[] temp = blacklistedItem.split(":");
-				dataValueBlack = Integer.parseInt(temp[0]);
-				damageValueBlack = Integer.parseInt(temp[1]);
-			} else {
-				dataValueBlack = Integer.parseInt(blacklistedItem);
-			}
-
-			if (dataValueBlack != null && damageValueBlack != null) {
-				if (dataValue == dataValueBlack
-						&& damageValue == damageValueBlack) {
-					return true;
-				}
-
-			} else {
-				if (dataValue == dataValueBlack) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	protected boolean isWhitelistedItem(ItemStack item, String group) {
-		List<String> whitelist = plugin.getWhitelistedItems(group);
-
-		int dataValue = item.getTypeId();
-		int damageValue = item.getData().getData();
-
-		for (String whitelistedItem : whitelist) {
-
-			Integer dataValueBlack = null;
-			Integer damageValueBlack = null;
-
-			if (whitelistedItem.contains(":")) {
-				// For items such as wool. 35:1
-				String[] temp = whitelistedItem.split(":");
-				dataValueBlack = Integer.parseInt(temp[0]);
-				damageValueBlack = Integer.parseInt(temp[1]);
-			} else {
-				dataValueBlack = Integer.parseInt(whitelistedItem);
-			}
-
-			if (dataValueBlack != null && damageValueBlack != null) {
-				if (dataValue == dataValueBlack
-						&& damageValue == damageValueBlack) {
-					return true;
-				}
-			} else {
-				if (dataValue == dataValueBlack) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
-	protected int generateRandomUnique(Integer listsize, String playername) {
+	public int generateRandomUnique(Integer listsize, String playername) {
 
 		int random = 0;
 		boolean randomVerify = false;
@@ -292,7 +187,7 @@ public class Methods {
 		return random;
 	}
 
-	protected void returnItems(Player player, List<ItemStack> items) {
+	public void returnItems(Player player, List<ItemStack> items) {
 
 		String playerName = player.getName();
 
@@ -388,41 +283,41 @@ public class Methods {
 		}
 
 		if (player.hasPermission("idc.keepallitems")) {
-			player.sendMessage(ChatColor.GOLD + plugin.files.ALL_ITEMS_SURVIVED);
+			player.sendMessage(ChatColor.GOLD + plugin.getFiles().ALL_ITEMS_SURVIVED);
 			return;
 		}
 
-		String itemMessage = plugin.files.ITEMS_MESSAGE_ON_RESPAWN.replace(
+		String itemMessage = plugin.getFiles().ITEMS_MESSAGE_ON_RESPAWN.replace(
 				"{0}", count + "");
 		String percentageMessage = "";
 
 		String checkFirst = plugin.getConfig().getString(
-				"Groups." + plugin.files.getGroup(player) + ".check first");
+				"Groups." + plugin.getFiles().getGroup(player) + ".check first");
 
 		if (checkFirst == null)
 			checkFirst = "save";
 
 		if (checkFirst.equalsIgnoreCase("save")) {
-			percentageMessage = plugin.files.PERCENTAGE_MESSAGE_ON_RESPAWN;
+			percentageMessage = plugin.getFiles().PERCENTAGE_MESSAGE_ON_RESPAWN;
 		} else if (checkFirst.equalsIgnoreCase("delete")) {
-			percentageMessage = plugin.files.INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN;
+			percentageMessage = plugin.getFiles().INVERTED_PERCENTAGE_MESSAGE_ON_RESPAWN;
 		} else {
-			percentageMessage = plugin.files.PERCENTAGE_MESSAGE_ON_RESPAWN;
+			percentageMessage = plugin.getFiles().PERCENTAGE_MESSAGE_ON_RESPAWN;
 		}
 
 		player.sendMessage(ChatColor.GOLD + itemMessage);
-		if (plugin.wgClass.isWorldGuardReady()) {
+		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
 			percentageMessage = percentageMessage.replace("{0}",
-					plugin.wgClass.wgHandler.getRetainPercentage(player) + "%")
+					plugin.getWorldGuardClass().wgHandler.getRetainPercentage(player) + "%")
 					.replace(
 							"{1}",
-							plugin.wgClass.wgHandler
+							plugin.getWorldGuardClass().wgHandler
 									.getDeletePercentage(player) + "%");
 			player.sendMessage(ChatColor.RED + percentageMessage);
 		} else {
 			percentageMessage = percentageMessage.replace("{0}",
-					plugin.files.getRetainPercentage(player) + "%").replace(
-					"{1}", plugin.files.getDeletePercentage(player) + "%");
+					plugin.getFiles().getRetainPercentage(player) + "%").replace(
+					"{1}", plugin.getFiles().getDeletePercentage(player) + "%");
 			player.sendMessage(ChatColor.RED + percentageMessage);
 		}
 	}

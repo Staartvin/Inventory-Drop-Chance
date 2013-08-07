@@ -1,9 +1,12 @@
-package Staartvin.InventoryDropChance;
+package staartvin.inventorydropchance.worldhandler;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.World;
+
+import staartvin.inventorydropchance.InventoryDropChance;
+
 
 public class WorldHandlers {
 

@@ -1,4 +1,4 @@
-package Staartvin.InventoryDropChance.experience;
+package staartvin.inventorydropchance.experience;
 
 import java.lang.ref.WeakReference;
 import java.util.Arrays;

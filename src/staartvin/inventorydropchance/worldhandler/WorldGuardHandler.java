@@ -1,6 +1,9 @@
-package Staartvin.InventoryDropChance;
+package staartvin.inventorydropchance.worldhandler;
 
 import org.bukkit.entity.Player;
+
+import staartvin.inventorydropchance.InventoryDropChance;
+
 
 import com.mewin.WGCustomFlags.WGCustomFlagsPlugin;
 import com.sk89q.worldguard.bukkit.WorldGuardPlugin;
@@ -22,8 +25,8 @@ public class WorldGuardHandler {
 		plugin = instance;
 	}
 
-	protected void registerFlags() {
-		if (!plugin.wgClass.isWorldGuardReady())
+	public void registerFlags() {
+		if (!plugin.getWorldGuardClass().isWorldGuardReady())
 			return;
 
 		XPLOSS_PERCENTAGE = new IntegerFlag("xploss-percentage");
@@ -35,9 +38,9 @@ public class WorldGuardHandler {
 		customWGFlags.addCustomFlag(DELETE_PERCENTAGE);
 	}
 
-	protected int getRetainPercentage(Player player) {
+	public int getRetainPercentage(Player player) {
 
-		if (plugin.wgClass.isWorldGuardReady()) {
+		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
 			RegionManager regionManager = wgPlugin.getRegionManager(player
 					.getWorld());
 			if (regionManager != null) {
@@ -51,7 +54,7 @@ public class WorldGuardHandler {
 			}
 		}
 
-		for (String groupName : plugin.groups) {
+		for (String groupName : plugin.getConfig().getConfigurationSection("Groups").getKeys(false)) {
 			if (player.hasPermission("idc.group." + groupName)) {
 				return plugin.getConfig().getInt(
 						"Groups." + groupName + ".retain percentage");
@@ -60,9 +63,9 @@ public class WorldGuardHandler {
 		return 50;
 	}
 
-	protected int getDeletePercentage(Player player) {
+	public int getDeletePercentage(Player player) {
 
-		if (plugin.wgClass.isWorldGuardReady()) {
+		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
 			RegionManager regionManager = wgPlugin.getRegionManager(player
 					.getWorld());
 			if (regionManager != null) {
@@ -76,7 +79,7 @@ public class WorldGuardHandler {
 			}
 		}
 
-		for (String groupName : plugin.groups) {
+		for (String groupName : plugin.getConfig().getConfigurationSection("Groups").getKeys(false)) {
 			if (player.hasPermission("idc.group." + groupName)) {
 				return plugin.getConfig().getInt(
 						"Groups." + groupName + ".lose percentage");
@@ -85,9 +88,9 @@ public class WorldGuardHandler {
 		return 50;
 	}
 
-	protected int getExpPercentage(Player player) {
+	public int getExpPercentage(Player player) {
 
-		if (plugin.wgClass.isWorldGuardReady()) {
+		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
 			RegionManager regionManager = wgPlugin.getRegionManager(player
 					.getWorld());
 			if (regionManager != null) {
@@ -101,7 +104,7 @@ public class WorldGuardHandler {
 			}
 		}
 
-		for (String groupName : plugin.groups) {
+		for (String groupName : plugin.getConfig().getConfigurationSection("Groups").getKeys(false)) {
 			if (player.hasPermission("idc.group." + groupName)) {
 				return plugin.getConfig().getInt(
 						"Groups." + groupName + ".xp loss");
@@ -110,7 +113,7 @@ public class WorldGuardHandler {
 		return 50;
 	}
 
-	protected WorldGuardPlugin getWorldGuard() {
+	public WorldGuardPlugin getWorldGuard() {
 		wgPlugin = (WorldGuardPlugin) plugin.getServer().getPluginManager()
 				.getPlugin("WorldGuard");
 
@@ -122,7 +125,7 @@ public class WorldGuardHandler {
 		return (WorldGuardPlugin) wgPlugin;
 	}
 
-	protected WGCustomFlagsPlugin getWGCustomFlags() {
+	public WGCustomFlagsPlugin getWGCustomFlags() {
 		customWGFlags = (WGCustomFlagsPlugin) plugin.getServer()
 				.getPluginManager().getPlugin("WGCustomFlags");
 
