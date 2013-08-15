@@ -55,7 +55,7 @@ public class WorldGuardHandler {
 		String group = plugin.getFiles().getGroup(player);
 
 		if (group == null)
-			return 50;
+			return plugin.getConfig().getInt("Default values.retain percentage", 50);
 		else
 			return plugin.getConfig().getInt(
 					"Groups." + group + ".retain percentage");
@@ -79,7 +79,7 @@ public class WorldGuardHandler {
 		String group = plugin.getFiles().getGroup(player);
 
 		if (group == null)
-			return 50;
+			return plugin.getConfig().getInt("Default values.delete percentage", 50);
 		else
 			return plugin.getConfig().getInt(
 					"Groups." + group + ".delete percentage");
@@ -103,7 +103,7 @@ public class WorldGuardHandler {
 		String group = plugin.getFiles().getGroup(player);
 
 		if (group == null)
-			return 50;
+			return plugin.getConfig().getInt("Default values.xp loss", 50);
 		else
 			return plugin.getConfig().getInt(
 					"Groups." + group + ".xp loss");

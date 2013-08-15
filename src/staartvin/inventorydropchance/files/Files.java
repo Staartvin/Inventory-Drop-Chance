@@ -107,7 +107,8 @@ public class Files {
 						+ "\n		kept amount = 64 * (50 / 100) = 32"
 						+ "\n		delete amount = 32 * (50 / 100) = 16"
 						+ "\n		drop amount = 64 - 32 = 32"
-						+ "\n	A player will keep 16 diamonds after his death. 32 will be dropped at his death location.");
+						+ "\n	A player will keep 16 diamonds after his death. 32 will be dropped at his death location."
+						+ "\nYou don't need to touch the default values. These are used when a player is not in a group.");
 
 		config.addDefault("verboseLogging", true);
 		config.addDefault(
@@ -120,6 +121,11 @@ public class Files {
 		config.addDefault("Groups.ExampleGroup.use xp loss", false);
 		config.addDefault("Groups.ExampleGroup.check first", "save");
 		config.addDefault("Groups.ExampleGroup.per-stack-check", false);
+		
+		// Default values
+		config.addDefault("Default values.retain percentage", 50);
+		config.addDefault("Default values.delete percentage", 50);
+		config.addDefault("Default values.xp loss", 50);
 
 		config.addDefault("Updater.doCheckUpdate", true);
 
@@ -176,7 +182,7 @@ public class Files {
 		else {
 			String group = plugin.getFiles().getGroup(player);
 			
-			if (group == null) return 50;
+			if (group == null) return config.getInt("Default values.retain percentage", 50);
 			else return plugin.getConfig().getInt(
 					"Groups." + group + ".retain percentage");
 		}
@@ -192,7 +198,7 @@ public class Files {
 		else {
 			String group = plugin.getFiles().getGroup(player);
 			
-			if (group == null) return 50;
+			if (group == null) return config.getInt("Default values.delete percentage", 50);
 			else return plugin.getConfig().getInt(
 					"Groups." + group + ".delete percentage");
 		}
@@ -218,7 +224,7 @@ public class Files {
 		else {
 			String group = plugin.getFiles().getGroup(player);
 			
-			if (group == null) return 50;
+			if (group == null) return config.getInt("Default values.xp loss", 50);
 			else return plugin.getConfig().getInt(
 					"Groups." + group + ".xp loss");
 		}
@@ -299,4 +305,6 @@ public class Files {
 
 		return config.getString("Groups." + group + ".check first");
 	}
+	
+	
 }
