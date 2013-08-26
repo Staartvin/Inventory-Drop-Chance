@@ -67,7 +67,7 @@ public class InventoryDropChance extends JavaPlugin {
 			return;
 		}
 		
-		// Check for a newer version
+		// Check for a newer version IF we are allowed to
 		if (getConfig().getBoolean("Updater.doCheckUpdate")) {
 			updater = new Updater(this, "inventory-drop-chance", this.getFile(),
 					Updater.UpdateType.NO_DOWNLOAD, false);

@@ -186,11 +186,15 @@ public class Methods {
 		int count = 0;
 		PlayerInventory replacement = player.getInventory();
 
-		// Give kept items
-		for (ItemStack item: items) {
-			replacement.addItem(item);
-			count++;
+		
+		if (items != null) {
+			// Give kept items
+			for (ItemStack item: items) {
+				replacement.addItem(item);
+				count++;
+			}
 		}
+		
 
 		// Give whitelisted items
 		if (whitelistedItems.get(playerName) != null) {
