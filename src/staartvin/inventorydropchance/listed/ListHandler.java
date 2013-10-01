@@ -14,6 +14,7 @@ public class ListHandler {
 		plugin = instance;
 	}
 	
+	@SuppressWarnings("deprecation")
 	public boolean isBlacklistedItem(ItemStack item, String group) {
 		List<String> blacklist = plugin.getBlacklistedItems(group);
 
@@ -52,7 +53,9 @@ public class ListHandler {
 	public boolean isWhitelistedItem(ItemStack item, String group) {
 		List<String> whitelist = plugin.getWhitelistedItems(group);
 
+		@SuppressWarnings("deprecation")
 		int dataValue = item.getTypeId();
+		@SuppressWarnings("deprecation")
 		int damageValue = item.getData().getData();
 
 		for (String whitelistedItem : whitelist) {

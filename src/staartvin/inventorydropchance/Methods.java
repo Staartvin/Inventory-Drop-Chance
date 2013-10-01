@@ -273,24 +273,28 @@ public class Methods {
 	}
 
 	boolean isHelmet(ItemStack item) {
+		@SuppressWarnings("deprecation")
 		int ID = item.getTypeId();
 
 		return (ID == 298 || ID == 302 || ID == 306 || ID == 310 || ID == 314);
 	}
 
 	boolean isChestplate(ItemStack item) {
+		@SuppressWarnings("deprecation")
 		int ID = item.getTypeId();
 
 		return (ID == 299 || ID == 303 || ID == 307 || ID == 311 || ID == 315);
 	}
 
 	boolean isLeggings(ItemStack item) {
+		@SuppressWarnings("deprecation")
 		int ID = item.getTypeId();
 
 		return (ID == 300 || ID == 304 || ID == 308 || ID == 312 || ID == 316);
 	}
 
 	boolean isBoots(ItemStack item) {
+		@SuppressWarnings("deprecation")
 		int ID = item.getTypeId();
 
 		return (ID == 301 || ID == 305 || ID == 309 || ID == 313 || ID == 317);
