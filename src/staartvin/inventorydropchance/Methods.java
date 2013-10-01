@@ -190,8 +190,12 @@ public class Methods {
 		if (items != null) {
 			// Give kept items
 			for (ItemStack item: items) {
-				replacement.addItem(item);
-				count++;
+				
+				// Check if item is not null
+				if (item != null) {
+					replacement.addItem(item);
+					count++;
+				}
 			}
 		}
 		
