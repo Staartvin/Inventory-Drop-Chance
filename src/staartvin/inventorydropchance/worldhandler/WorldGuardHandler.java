@@ -18,7 +18,6 @@ public class WorldGuardHandler {
 	WGCustomFlagsPlugin customWGFlags;
 	public static IntegerFlag RETAIN_PERCENTAGE;
 	public static IntegerFlag DELETE_PERCENTAGE;
-	public static IntegerFlag XPLOSS_PERCENTAGE;
 
 	public WorldGuardHandler(InventoryDropChance instance) {
 		plugin = instance;
@@ -28,11 +27,9 @@ public class WorldGuardHandler {
 		if (!plugin.getWorldGuardClass().isWorldGuardReady())
 			return;
 
-		XPLOSS_PERCENTAGE = new IntegerFlag("xploss-percentage");
 		RETAIN_PERCENTAGE = new IntegerFlag("retain-percentage");
 		DELETE_PERCENTAGE = new IntegerFlag("lose-percentage");
 
-		customWGFlags.addCustomFlag(XPLOSS_PERCENTAGE);
 		customWGFlags.addCustomFlag(RETAIN_PERCENTAGE);
 		customWGFlags.addCustomFlag(DELETE_PERCENTAGE);
 	}
@@ -84,30 +81,6 @@ public class WorldGuardHandler {
 			return plugin.getConfig().getInt(
 					"Groups." + group + ".delete percentage");
 	}
-
-	public int getExpPercentage(Player player) {
-
-		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
-			RegionManager regionManager = wgPlugin.getRegionManager(player
-					.getWorld());
-			if (regionManager != null) {
-				ApplicableRegionSet set = regionManager
-						.getApplicableRegions(player.getLocation());
-				if (set != null) {
-					if (set.getFlag(XPLOSS_PERCENTAGE) != null) {
-						return set.getFlag(XPLOSS_PERCENTAGE);
-					}
-				}
-			}
-		}
-		String group = plugin.getFiles().getGroup(player);
-
-		if (group == null)
-			return plugin.getConfig().getInt("Default values.xp loss", 50);
-		else
-			return plugin.getConfig().getInt(
-					"Groups." + group + ".xp loss");
-	} 
 
 	public WorldGuardPlugin getWorldGuard() {
 		wgPlugin = (WorldGuardPlugin) plugin.getServer().getPluginManager()

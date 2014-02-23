@@ -162,16 +162,6 @@ public class Files {
 		saveLanguageConfig();
 	}
 
-	public boolean getExpLossUsage(Player player) {
-
-		String group = getGroup(player);
-
-		if (group == null)
-			return false;
-		else
-			return config.getBoolean("Groups." + group + ".use xp loss");
-	}
-
 	public int getRetainPercentage(Player player) {
 
 		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
@@ -214,22 +204,6 @@ public class Files {
 		return null;
 	}
 
-	public int getExpPercentage(Player player) {
-
-		if (plugin.getWorldGuardClass().isWorldGuardReady()) {
-			return plugin.getWorldGuardClass().wgHandler
-					.getExpPercentage(player);
-		}
-		
-		else {
-			String group = plugin.getFiles().getGroup(player);
-			
-			if (group == null) return config.getInt("Default values.xp loss", 50);
-			else return plugin.getConfig().getInt(
-					"Groups." + group + ".xp loss");
-		}
-	}
-
 	public boolean logVerbose() {
 		return config.getBoolean("verboseLogging");
 	}
@@ -252,12 +226,6 @@ public class Files {
 				plugin.getLogger().warning(
 						"Delete Percentage for group '" + group
 								+ "' is not found!");
-				allIsRight = false;
-			}
-
-			if (config.getInt("Groups." + group + ".xp loss", -1) == -1) {
-				plugin.getLogger().warning(
-						"XP Loss for group '" + group + "' is not found!");
 				allIsRight = false;
 			}
 

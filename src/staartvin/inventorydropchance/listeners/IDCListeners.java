@@ -188,7 +188,7 @@ public class IDCListeners implements Listener {
 
 		// Give player saved EXP
 		// Redundant: see line 41 of ExpHandler
-		if (plugin.getFiles().getExpLossUsage(player)) {
+		/*if (plugin.getFiles().getExpLossUsage(player)) {
 			if (!player.hasPermission("idc.keepxp")) {
 				if (ExpToKeep.get(playerName) == null)
 					return;
@@ -206,7 +206,7 @@ public class IDCListeners implements Listener {
 							}
 						}, 20L);
 			}
-		}
+		}*/
 
 		plugin.getMethods().returnItems(player, items.get(playerName));
 
