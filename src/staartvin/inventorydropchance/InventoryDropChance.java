@@ -4,7 +4,6 @@ import java.util.List;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
-import staartvin.inventorydropchance.experience.ExpHandler;
 import staartvin.inventorydropchance.files.Files;
 import staartvin.inventorydropchance.listed.ListHandler;
 import staartvin.inventorydropchance.listeners.IDCListeners;
@@ -22,7 +21,6 @@ public class InventoryDropChance extends JavaPlugin {
 	private Methods methods = new Methods(this);
 	public Updater updater;
 	private ListHandler listHandler = new ListHandler(this);
-	private ExpHandler expHandler = new ExpHandler(this);
 
 	public void onEnable() {
 		getServer().getPluginManager().registerEvents(getEvents(), this);
@@ -72,7 +70,7 @@ public class InventoryDropChance extends JavaPlugin {
 			updater = new Updater(this, "inventory-drop-chance", this.getFile(),
 					Updater.UpdateType.NO_DOWNLOAD, false);
 		}
-
+		
 		System.out.println("[" + getDescription().getName()
 				+ "] has been enabled!");
 	}
@@ -122,9 +120,5 @@ public class InventoryDropChance extends JavaPlugin {
 	
 	public ListHandler getListHandler() {
 		return listHandler;
-	}
-	
-	public ExpHandler getExpHandler() {
-		return expHandler;
 	}
 }

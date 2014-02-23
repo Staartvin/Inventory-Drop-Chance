@@ -117,8 +117,8 @@ public class Files {
 						"DisabledWorld_nether", "DisabledWorld_the_end" }));
 		config.addDefault("Groups.ExampleGroup.retain percentage", 50);
 		config.addDefault("Groups.ExampleGroup.delete percentage", 0);
-		config.addDefault("Groups.ExampleGroup.xp loss", 25);
-		config.addDefault("Groups.ExampleGroup.use xp loss", false);
+		//config.addDefault("Groups.ExampleGroup.xp loss", 25);
+		//config.addDefault("Groups.ExampleGroup.use xp loss", false);
 		config.addDefault("Groups.ExampleGroup.check first", "save");
 		config.addDefault("Groups.ExampleGroup.per-stack-check", false);
 		

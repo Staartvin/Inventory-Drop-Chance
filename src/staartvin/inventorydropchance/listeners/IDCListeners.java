@@ -6,6 +6,7 @@ import java.util.List;
 
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.PlayerDeathEvent;
 import org.bukkit.event.player.PlayerRespawnEvent;
@@ -38,7 +39,7 @@ public class IDCListeners implements Listener {
 		this.plugin = plugin;
 	}
 
-	@EventHandler
+	@EventHandler(priority = EventPriority.HIGHEST)
 	protected void onPlayerDeath(PlayerDeathEvent event) {
 
 		Player player = event.getEntity().getPlayer();
@@ -48,9 +49,30 @@ public class IDCListeners implements Listener {
 			return;
 
 		count.put(player.getName(), player.getInventory().getContents().length);
-
+		
 		// Run EXP check
-		plugin.getExpHandler().doEXPCheck(player, event);
+		//plugin.getExpHandler().doEXPCheck(player, event);
+		
+		if (player.hasPermission("idc.keepxp")) {
+			event.setNewTotalExp(event.getDroppedExp());
+			event.setDroppedExp(0);
+			event.setKeepLevel(true);
+			return;
+		}
+
+		/*if (plugin.getFiles().getExpLossUsage(player)) {
+			//ExperienceManager expMan = plugin.events.expManHandler.get(player.getName());
+			
+			int calEXP = plugin.getExpHandler().calculateExp(player.getTotalExperience(), player);
+			
+			event.setNewTotalExp(calEXP);
+			
+			// Dropped exp = total exp of player - (total exp * xploss percentage)
+			event.setDroppedExp(player.getTotalExperience() - calEXP);
+			
+			// Save the exp to give back
+			plugin.getEvents().ExpToKeep.put(player.getName(), calEXP);
+		}*/
 
 		if (player.hasPermission("idc.keepallitems")) {
 			List<ItemStack> itemStackArray = new ArrayList<ItemStack>();
@@ -165,6 +187,7 @@ public class IDCListeners implements Listener {
 			return;
 
 		// Give player saved EXP
+		// Redundant: see line 41 of ExpHandler
 		if (plugin.getFiles().getExpLossUsage(player)) {
 			if (!player.hasPermission("idc.keepxp")) {
 				if (ExpToKeep.get(playerName) == null)
@@ -174,10 +197,14 @@ public class IDCListeners implements Listener {
 						.runTaskLater(plugin, new Runnable() {
 
 							public void run() {
-								player.giveExp(ExpToKeep.get(playerName));
-								ExpToKeep.put(playerName, null);
+								if (player.getExp() <= 0) {
+									System.out.print("give exp!");
+									player.giveExp(ExpToKeep.get(playerName));	
+								}
+								//System.out.print("Exp to keep: " + ExpToKeep.get(playerName));
+								//ExpToKeep.put(playerName, null);
 							}
-						}, 3L);
+						}, 20L);
 			}
 		}
 
