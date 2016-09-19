@@ -27,12 +27,10 @@ public class InventoryDropChance extends JavaPlugin {
 		files.loadConfiguration();
 
 		if (!wgClass.checkWorldGuard()) {
-			System.out
-					.print("[Inventory Drop Chance] WorldGuard has not been found. Custom flags cannot be used!");
+			this.getLogger().info("WorldGuard has not been found. Custom flags cannot be used!");
 		}
 		if (!wgClass.checkWGCustomFlags()) {
-			System.out
-					.print("[Inventory Drop Chance] WGCustomFlags has not been found. Custom flags cannot be used!");
+			this.getLogger().info("WGCustomFlags has not been found. Custom flags cannot be used!");
 		}
 		
 		if (wgClass.isWorldGuardReady()) {
@@ -40,10 +38,8 @@ public class InventoryDropChance extends JavaPlugin {
 			// Get WorldGuardHandler
 			wgClass.initialiseWGHandler(this);
 			
-			System.out
-					.print("[Inventory Drop Chance] Hooked into WorldGuard and WGCustomFlags!");
-			System.out
-					.print("[Inventory Drop Chance] WorldGuard custom flags can be used!");
+			this.getLogger().info("Hooked into WorldGuard and WGCustomFlags!");
+			this.getLogger().info("WorldGuard custom flags can be used!");
 			wgClass.wgHandler.getWGCustomFlags();
 			wgClass.wgHandler.getWorldGuard();
 			wgClass.wgHandler.registerFlags();
@@ -52,10 +48,10 @@ public class InventoryDropChance extends JavaPlugin {
 		// Initialize worlds
 		wHandlers.getWorlds();
 
-		System.out.print("[Inventory Drop Chance] Configuring worlds!");
+		this.getLogger().info("Configuring worlds!");
 
 		// Initialize enabled worlds
-		System.out.print("[Inventory Drop Chance] Checking "
+		this.getLogger().info("Checking "
 				+ wHandlers.getEnabledWorlds().size() + " worlds!");
 
 		// Check if the config is set up correctly
@@ -71,7 +67,7 @@ public class InventoryDropChance extends JavaPlugin {
 					Updater.UpdateType.NO_DOWNLOAD, false);
 		}
 		
-		System.out.println("[" + getDescription().getName()
+		this.getLogger().info(getDescription().getName()
 				+ "] has been enabled!");
 	}
 
@@ -80,7 +76,7 @@ public class InventoryDropChance extends JavaPlugin {
 		files.saveLanguageConfig();
 		reloadConfig();
 		saveConfig();
-		System.out.println("[" + getDescription().getName()
+		this.getLogger().info(getDescription().getName()
 				+ "] has been disabled!");
 	}
 

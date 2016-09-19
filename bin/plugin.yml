@@ -16,4 +16,3 @@ permissions:
         description: A player with this permission will get notified when a newer version is available.
         default: op
 commands:
-#update for lol768 on Bukkit
